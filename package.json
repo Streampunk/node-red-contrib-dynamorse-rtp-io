@@ -1,0 +1,38 @@
+{
+  "name": "node-red-contrib-dynamorse-rtp-io",
+  "version": "0.0.1",
+  "description": "Dynamorse RTP IO nodes for Node-RED",
+  "author": "Streampunk Media Ltd",
+  "license": "Apache-2.0",
+  "keywords": [
+    "Node-RED"
+  ],
+  "dependencies": {
+    "mdns-js": "^0.5.0",
+    "netadon" : "^0.0.5",
+    "promise": "^7.1.1"
+  },
+  "devDependencies": {
+    "tape": "^4.2.2"
+  },
+  "scripts": {
+    "test": "tape test/*Spec.js"
+  },
+  "node-red": {
+    "nodes": {
+      "nmos rtp in": "nodes/30-nmos-rtp-in.js",
+      "nmos rtp out": "nodes/30-nmos-rtp-out.js",
+      "aspen ts in": "nodes/32-aspen-ts-in.js",
+      "aspen ts out": "nodes/32-aspen-ts-out.js",
+      "pcap reader": "nodes/90-pcap-reader.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Streampunk/node-red-contrib-dynamorse-rtp-io.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Streampunk/node-red-contrib-dynamorse-rtp-io/issues"
+  },
+  "homepage": "https://github.com/Streampunk/node-red-contrib-dynamorse-rtp-io#readme"
+}

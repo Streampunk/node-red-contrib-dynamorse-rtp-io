@@ -1,0 +1,150 @@
+<!--
+  Copyright 2016 Streampunk Media Ltd.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+  RED.nodes.registerType('nmos-rtp-in',{
+    category: 'funnel',
+    color: '#E59D63',
+    defaults: {
+      name: { value : '' },
+      maxBuffer : { value : 10, validate : RED.validators.number() },
+      description : { value : '' },
+      device : { value : '', type : 'device' },
+      sender : { value : '', validate : function (v) { return v || v.length > 0 || this.sdpURL.length > 0; } },
+      sdpURL : { value : '', validate : function (v) { return v || v.length > 0 || this.sender.length > 0; } },
+      netif : { value : '0.0.0.0', validate : RED.validators.regex(/((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/) },
+      regenerate : { value : false }
+    },
+    inputs:0,
+    outputs:1,
+    icon: "funnel.png",
+    label: function() {
+      return this.name || "nmos-rtp-in";
+    }
+  });
+</script>
+
+<script type="text/x-red" data-template-name="nmos-rtp-in">
+  <!-- Common to all funnel nodes -->
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> name</label>
+    <input type="text" id="node-input-name" placeholder="name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-maxBuffer"><i class="fa fa-suitcase"></i> max buffer</label>
+    <input type="number" id="node-input-maxBuffer" placeholder="10" style="width: 100px">
+  </div>
+  <div class="form-row">
+    <label for="node-input-description"><i class="fa fa-info-circle"></i> description</label>
+    <input type="text" id="node-input-description" placeholder="source and flow description">
+  </div>
+  <div class="form-row">
+    <label for="node-input-device"><i class="fa fa-tablet"></i> device</label>
+    <input type="text" id="node-input-device">
+  </div>
+  <p>Either enter an href, id or query string for a NMOS sender or a link to a SDP file.</p>
+  <div class="form-row">
+    <label for="node-input-sender"><i class="fa fa-paper-plane" aria-hidden="true"></i> sender</label>
+    <input type="text" id="node-input-sender" placeholder="label=news3-mic7">
+  </div>
+  <div class="form-row">
+    <label for="node-input-sdpURL"><i class="fa fa-external-link-square"></i> SDP URL</label>
+    <input type="text" id="node-input-sdpURL" placeholder="file:video.sdp">
+  </div>
+  <div class="form-row">
+    <label for="node-input-netif"><i class="fa fa-external-link-square" aria-hidden="true"></i> interface</label>
+    <input type="text" id="node-input-netif" placeholder="0.0.0.0" style="width: 120px">
+  </div>
+  <div class="form-row">
+    <label for="node-input-regenerate"><i class="fa fa-clock-o"></i> regenerate?</label>
+    <input type="checkbox" id="node-input-regenerate" style="width: 100px">
+  </div>
+</script>
+
+<style>
+.param-table table, th, td {
+  vertical-align: top;
+  padding: 3px;
+}
+</style>
+
+<script type="text/x-red" data-help-name="nmos-rtp-in">
+  <h1>NMOS RTP input</h1>
+  <p>Recieve an NMOS RTP stream, either discovered by querying an NMOS query API
+  or by receiving an SDP file.</p>
+
+  <h3>Parameters</h3>
+  <div class="param-table">
+  <table>
+   <tr>
+    <th>parameter</th><th>description</th>
+   </tr>
+   <tr>
+    <td><i class="fa fa-tag" aria-hidden="true"></i> name</td>
+    <td>Name of the node.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-suitcase"></i> max buffer</td>
+    <td>Maximum number of grains to buffer before overflowing.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-info-circle"></i> description</td>
+    <td>Optional description of the this NMOS source and output flow.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-tablet"></i> device</td>
+    <td>Select or create an NMOS device for the output source and flow.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-paper-plane" aria-hidden="true"></i> sender</td>
+    <td>Means to locate details of the RTP stream sender via NMOS APIs. See below
+    table for details.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-external-link-square"></i> SDP URL</td>
+    <td>URL (<code>file:</code> or <code>http:</code>) to be used to locate the
+    SDP file that describes the stream.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-external-link-square" aria-hidden="true"></i> interface</td>
+    <td>Local network interface card for joining a multicast group.
+    <code>0.0.0.0</code> is treated as all interfaces.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-clock-o"></i> regenerate?</td>
+    <td>Should the grain metadata be regenerated? Otherwise, the existing metadata
+    will be passed through.</td>
+   </tr>
+  </table>
+  </div>
+
+  <p>Enter either information about a sender or an SDP URL. If you enter both, the details
+  of the sender will be used before those read from the SDP URL.</p>
+
+  <p>Sender details will be matched as follows:</p>
+  <ol>
+   <li>If the value is a full URL, this will be used as an explicit path to look up a sender
+   via the NMOS NodeAPI.</li>
+   <li>If the value is a UUID, an NMOS QueryAPI will be discovered via MDNS and the sender
+   will be looked up using that.</li>
+   <li>Values containing equals signs (<code>=</code>) and ampersands (<code>&amp;</code>) will
+   be treated as query strings to an MDNS-discoverd QueryAPI, e.g. <code>label=Microphone6</label></code>.</li>
+  </ol>
+
+  <h3>Maturity</h3>
+  <p>Mostly implemented with some features to add. Implementation
+  <a href="https://github.com/Streampunk/dynamorse/issues/1">status</a>.</p>
+</script>

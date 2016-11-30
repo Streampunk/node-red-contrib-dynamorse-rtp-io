@@ -1,0 +1,125 @@
+<!--
+  Copyright 2016 Streampunk Media Ltd.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+  RED.nodes.registerType('nmos-rtp-out',{
+    category: 'spout',
+    color: '#E59D63',
+    defaults: {
+      name : { value : '' },
+      description : { value : '' },
+      address : { value : '', validate : RED.validators.regex(/((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/) },
+      port : { value : 5000, validate : RED.validators.number() },
+      ttl : { value : 127, validate : RED.validators.number() },
+      netif : { value : '', validate : RED.validators.regex(/(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))?/) },
+      payloadType : { value : 96, validate : RED.validators.number() },
+      timeout : { value : 0, validate : RED.validators.number() }
+    },
+    inputs:1,
+    outputs:0,
+    align: 'right',
+    icon: "spout.png",
+    label: function() {
+      return this.name || "nmos-rtp-out";
+    }
+  });
+</script>
+
+<style>
+.param-table table, th, td {
+  vertical-align: top;
+  padding: 3px;
+}
+</style>
+
+<script type="text/x-red" data-template-name="nmos-rtp-out">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> name</label>
+    <input type="text" id="node-input-name" placeholder="name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-description"><i class="fa fa-info-circle"></i> description</label>
+    <input type="text" id="node-input-description" placeholder="source and flow description">
+  </div>
+  <div class="form-row">
+    <label for="node-input-address"><i class="fa fa-at" aria-hidden="true"></i> address</label>
+    <input type="text" id="node-input-address" placeholder="224.1.2.3" style="width: 120px">
+    <label for="node-input-port" style="width: 60px"><i class="fa fa-ship" aria-hidden="true"></i> port</label>
+    <input type="number" min="1024" max="65536" id="node-input-port" placeholder="5001" style="width: 80px">
+  </div>
+  <div class="form-row">
+    <label for="node-input-netif"><i class="fa fa-external-link-square" aria-hidden="true"></i> interface</label>
+    <input type="text" id="node-input-netif" placeholder="10.0.0.1" style="width: 120px">
+    <label for="node-input-ttl" style="width: 60px"><i class="fa fa-heart" aria-hidden="true"></i> ttl</label>
+    <input type="number" min="0" max="255" id="node-input-ttl" placeholder="127" style="width: 80px">
+  </div>
+  <div class="form-row">
+    <label for="node-input-payloadType"><i class="fa fa-briefcase" aria-hidden="true"></i> payload type</label>
+    <input type="number" min="96" max="127" id="node-input-payloadType" placeholder="96" style="width: 120px">
+    <label for="node-input-timeout"><i class="fa fa-clock-o"></i> timeout</label>
+    <input type="number" min="0" id="node-input-timeout" placeholder="0" style="width: 80px">
+  </div>
+</script>
+
+<script type="text/x-red" data-help-name="nmos-rtp-out">
+  <h1>NMOS RTP output</h1>
+  <p>Send an NMOS RTP stream, advertised via NMOS APIs.</p>
+
+  <p>Audio streams are sent as RFC 3190 with NMOS header extensions. Uncompressed video
+  streams are sent according to RFC 4175 with NMOS header extensions.</p>
+
+  <h3>Parameters</h3>
+  <div class="param-table">
+  <table>
+   <tr>
+    <th>parameter</th><th>description</th>
+   </tr>
+   <tr>
+    <td><i class="fa fa-tag" aria-hidden="true"></i> name</td>
+    <td>Name of the node. Also used as the label for the flow, source and sender
+    of the output.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-info-circle"></i> description</td>
+    <td>Optional description of the this NMOS source and output flow.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-at" aria-hidden="true"></i> address</td>
+    <td>Address for the RTP output stream.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-ship" aria-hidden="true"></i> port</td>
+    <td>Port for the RTP output stream.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-external-link-square" aria-hidden="true"></i> interface</td>
+    <td>Network interface card the stream is bound to.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-heart" aria-hidden="true"></i> ttl</td>
+    <td>Multicast TTL to set in all output packets.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-clock-o"></i> timeout</td>
+    <td>Time to wait between writing each grain. Controls the back-pressure.</td>
+   </tr>
+  </table>
+  </div>
+
+  <h3>Maturity</h3>
+  <p>Mostly implemented with some features to add. Implementation
+  <a href="https://github.com/Streampunk/dynamorse/issues/2">status</a>.</p>
+</script>
