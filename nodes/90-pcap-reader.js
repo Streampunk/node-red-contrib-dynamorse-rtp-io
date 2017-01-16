@@ -41,14 +41,14 @@ module.exports = function (RED) {
     this.tags = {};
     this.grainCount = 0;
     this.baseTime = [ Date.now() / 1000|0, (Date.now() % 1000) * 1000000 ];
-    this.exts = RED.nodes.getNode(
-      this.context().global.get('rtp_ext_id')).getConfig();
     var nodeAPI = this.context().global.get('nodeAPI');
     var ledger = this.context().global.get('ledger');
     this.sdpURLReader(config, function (err, data) {
       if (err) {
         return this.preFlightError(err);
       }
+      this.exts = RED.nodes.getNode(
+        this.context().global.get('rtp_ext_id')).getConfig();
       var localName = config.name || `${config.type}-${config.id}`;
       var localDescription = config.description || `${config.type}-${config.id}`;
       var pipelinesID = config.device ?

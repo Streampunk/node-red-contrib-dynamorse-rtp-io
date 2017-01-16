@@ -30,14 +30,16 @@ var pcapNodeId = "24fde3d7.b7544c";
 var spoutNodeId = "f2186999.7e5f78";
 
 TestUtil.nodeRedTest('A pcap-reader->spout flow is posted to Node-RED', {
-  filename: __dirname + '/data/rtp-video-rfc4175-1080i50-colour.pcap',
+  pcapFilename: __dirname + '/data/rtp-video-rfc4175-1080i50-colour.pcap',
+  sdpFilename: __dirname + '/data/sdp_rfc4175_10bit_1080i50.sdp',
   maxBuffer: 10,
   spoutTimeout: 0
 }, function getFlow(params) {
   var testFlow = JSON.parse(TestUtil.testNodes.baseTestFlow);
   testFlow.nodes[0] = JSON.parse(pcapTestNode);
   testFlow.nodes[0].id = pcapNodeId;
-  testFlow.nodes[0].file = params.filename,
+  testFlow.nodes[0].file = params.pcapFilename,
+  testFlow.nodes[0].sdpURL = `file:${params.sdpFilename}`,
   testFlow.nodes[0].maxBuffer = params.maxBuffer;
   testFlow.nodes[0].wires[0][0] = spoutNodeId;
 
