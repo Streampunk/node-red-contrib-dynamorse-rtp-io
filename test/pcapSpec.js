@@ -13,7 +13,7 @@
   limitations under the License.
 */
 
-var TestUtil = require('node-red-contrib-dynamorse-core').TestUtil;
+var TestUtil = require('dynamorse-test').TestUtil;
 var util = require('util');
 
 var pcapTestNode = JSON.stringify({
