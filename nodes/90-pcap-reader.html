@@ -59,8 +59,7 @@
       packing : { value : "pgroup" },
       channels : { value : 0, validate : RED.validators.number() },
       bitrate : { value : 0, validate : RED.validators.number() },
-      maxBuffer : { value : 10, validate : RED.validators.number() },
-      wsPort : { value : 0, validate : RED.validators.number() }
+      maxBuffer : { value : 10, validate : RED.validators.number() }
     },
     inputs:0,
     outputs:1,
@@ -204,10 +203,6 @@
     <label for="node-input-bitrate" style="text-align: left">
       &nbsp;<i class="fa fa-long-arrow-right"></i> bitrate</label>
     <input type="number" min="0" placeholder="0" id="node-input-bitrate" style="width: 80px">
-  </div>
-  <div class="form-row">
-    <label for="node-input-wsPort"><i class="fa fa-eye"></i> websock port</label>
-    <input type="text" id="node-input-wsPort" readonly placeholder="0">
   </div>
 </script>
 

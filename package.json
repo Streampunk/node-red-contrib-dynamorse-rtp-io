@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-dynamorse-rtp-io",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Dynamorse RTP IO nodes for Node-RED",
   "author": "Streampunk Media Ltd",
   "license": "Apache-2.0",
@@ -23,6 +23,8 @@
   },
   "node-red": {
     "nodes": {
+      "raw-file-in": "nodes/10-raw-file-in.js",
+      "raw-file-out": "nodes/10-raw-file-out.js",
       "nmos rtp in": "nodes/30-nmos-rtp-in.js",
       "nmos rtp out": "nodes/30-nmos-rtp-out.js",
       "aspen ts in": "nodes/32-aspen-ts-in.js",
