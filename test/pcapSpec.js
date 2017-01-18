@@ -51,6 +51,7 @@ TestUtil.nodeRedTest('A pcap-reader->spout flow is posted to Node-RED', {
   //t.comment(`Message: ${JSON.stringify(msgObj)}`);
   if (msgObj.hasOwnProperty('receive')) {
     TestUtil.checkGrain(t, msgObj.receive);
+    params.count++;
   }
   else if (msgObj.hasOwnProperty('end') && (msgObj.src === 'spout')) {
     onEnd();
