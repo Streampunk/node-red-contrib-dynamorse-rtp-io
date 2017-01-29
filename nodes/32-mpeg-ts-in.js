@@ -14,13 +14,36 @@
 */
 
 var redioactive = require('node-red-contrib-dynamorse-core').Redioactive;
+var Grain = require('node-red-contrib-dynamorse-core').Grain;
 var util = require('util');
+var http = require('http');
+var tesladon = require('tesladon');
+var H = require('highland');
+var uuid = require('uuid');
 
 module.exports = function (RED) {
   function MPEGTSIn (config) {
     RED.nodes.createNode(this,config);
     redioactive.Funnel.call(this, config);
-    // Go figure!
+
+    if (!this.context().global.get('updated'))
+      return this.log('Waiting for global context to be updated.');
+    var node = this;
+    var flowID = uuid.v4();
+    var sourceID = uuid.v4();
+    http.get(config.source, res => {
+      this.highland(H(res)
+        .pipe(tesladon.bufferGroup(188))
+        .pipe(tesladon.readTSPackets())
+        .pipe(tesladon.readPAT(true))
+        .pipe(tesladon.readPMTs(true))
+        .pipe(tesladon.readPESPackets(true))
+        .filter(x => x.type === 'PESPacket' && x.pid === 4096)
+        .map(x => new Grain(x.payloads,
+          `${x.pts / 90000|0}:${(((x.pts % 90000) / 90000.0) * 1000000000) >>> 0}`,
+          `${x.pts / 90000|0}:${(((x.pts % 90000) / 90000.0) * 1000000000) >>> 0}`,
+          null, flowID, sourceID, "25/1")));
+    });
   }
   util.inherits(MPEGTSIn, redioactive.Funnel);
   RED.nodes.registerType("mpeg-ts-in", MPEGTSIn);
