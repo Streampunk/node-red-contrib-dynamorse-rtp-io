@@ -27,8 +27,8 @@
       "raw-file-out": "nodes/10-raw-file-out.js",
       "nmos rtp in": "nodes/30-nmos-rtp-in.js",
       "nmos rtp out": "nodes/30-nmos-rtp-out.js",
-      "aspen ts in": "nodes/32-aspen-ts-in.js",
-      "aspen ts out": "nodes/32-aspen-ts-out.js",
+      "mpeg ts in": "nodes/32-mpeg-ts-in.js",
+      "mpeg ts out": "nodes/32-mpeg-ts-out.js",
       "pcap reader": "nodes/90-pcap-reader.js"
     }
   },

@@ -17,11 +17,11 @@ var redioactive = require('node-red-contrib-dynamorse-core').Redioactive;
 var util = require('util');
 
 module.exports = function (RED) {
-  function ASPENTSOut (config) {
+  function MPEGTSOut (config) {
     RED.nodes.createNode(this, config);
     redioactive.Spout.call(this, config);
     // Go figure!
   }
-  util.inherits(ASPENTSOut, redioactive.Spout);
-  RED.nodes.registerType("aspen-ts-out", ASPENTSOut);
+  util.inherits(MPEGTSOut, redioactive.Spout);
+  RED.nodes.registerType("mpeg-ts-out", MPEGTSOut);
 }

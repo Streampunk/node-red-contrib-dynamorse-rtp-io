@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ var redioactive = require('node-red-contrib-dynamorse-core').Redioactive;
 var util = require('util');
 
 module.exports = function (RED) {
-  function AspenTSIn (config) {
+  function MPEGTSIn (config) {
     RED.nodes.createNode(this,config);
     redioactive.Funnel.call(this, config);
     // Go figure!
   }
-  util.inherits(AspenTSIn, redioactive.Funnel);
-  RED.nodes.registerType("aspen-ts-in", AspenTSIn);
+  util.inherits(MPEGTSIn, redioactive.Funnel);
+  RED.nodes.registerType("mpeg-ts-in", MPEGTSIn);
 }
