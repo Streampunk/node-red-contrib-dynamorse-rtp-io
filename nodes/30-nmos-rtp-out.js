@@ -23,7 +23,7 @@ var dgram = require('netadon');
 var uuid = require('uuid');
 var Net = require('../util/Net.js');
 var util = require('util');
-var H264 = require('node-red-contrib-dynamorse-core').H264;
+var H264 = require('../util/H264.js');
 
 // TODO add IPv6 support
 

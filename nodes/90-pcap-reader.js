@@ -23,7 +23,7 @@ var grainConcater = require('../util/grainConcater.js');
 var Grain = require('node-red-contrib-dynamorse-core').Grain;
 var util = require('util');
 var SDPProcessing = require('../util/SDPProcessing.js');
-var H264 = require('node-red-contrib-dynamorse-core').H264;
+var H264 = require('../util/H264.js');
 
 module.exports = function (RED) {
   function PCAPReader (config) {
