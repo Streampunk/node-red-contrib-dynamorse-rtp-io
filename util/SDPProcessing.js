@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -70,24 +70,22 @@ var sdpURLReader = function (config, cb) {
     return cb(null, self.sdpToTags({}, config));
   var sdpDetails = url.parse(sdpUrl);
   if (sdpDetails.protocol.startsWith('file')) {
-    return fs.readFile(sdpDetails.path, 'utf8', function (err, data) {
+    return fs.readFile(sdpDetails.path, 'utf8', (err, data) => {
       if (err) return cb(err);
       else return cb(null, self.sdpToTags(data, config), sdp);
-    }.bind(this));
+    });
   } else if (sdpDetails.protocol.startsWith('http:')) {
-    http.get(sdpDetails.href, function (res) {
+    http.get(sdpDetails.href, (res) => {
       var sdpData = '';
       if (res.statusCode !== 200) return cb(new Error(
         `SDP file request resulted in non-200 response code of ${res.status}.`));
       res.setEncoding('utf8');
-      res.on('data', function (data) {
-        sdpData += data;
-      });
-      res.on('end', function () {
+      res.on('data', data => { sdpData += data; });
+      res.on('end', () => {
         console.log('*** Aggregated SDP', sdpData);
         cb(null, self.sdpToTags(sdpData, config), sdp);
       });
-    }.bind(this));
+    });
   } else {
     cb(new Error('Cannot read an SDP file with protocols other than http or file.'));
   }

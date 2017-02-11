@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 var test = require('tape');
 var RTPPacket = require('../model/RTPPacket.js');
 
-var packetNoExtension = new Buffer([
+var packetNoExtension = Buffer.from([
   0x80, 0x60, 0x52, 0x84, 0x4a, 0x85, 0xf8, 0x89, 0x0f, 0x55, 0xa3, 0x9f, 0x9d, 0x74
 ]);
 
-var packetWithExtension = new Buffer([
+var packetWithExtension = Buffer.from([
   0x90, 0x60, 0x52, 0x83, 0x4a, 0x85, 0xf8, 0x89, 0x0f, 0x55, 0xa3, 0x9f, 0xbe, 0xde,
   0x00, 0x13, 0x19, 0x00, 0x00, 0x56, 0x40, 0x63, 0xf4, 0x1c, 0x9c, 0x38, 0x00, 0x3f, 0x1c, 0xc7,
   0xca, 0xba, 0xda, 0xde, 0x4f, 0xb8, 0x9f, 0x71, 0x5d, 0xab, 0x4e, 0x37, 0xa2, 0x63, 0x4f, 0x45,
@@ -29,7 +29,7 @@ var packetWithExtension = new Buffer([
   0xf4, 0x1c, 0x9c, 0x38, 0x00, 0x97, 0x00, 0x00, 0x03, 0xe8, 0x00, 0x00, 0x61, 0xa8, 0x9d, 0x74
 ]);
 
-test('An RTP packet with extensions', function (t) {
+test('An RTP packet with extensions', t => {
   var p = new RTPPacket(packetWithExtension);
   //console.log(JSON.stringify(p, null, 2));
   t.equal(p.getVersion(), 2, 'has the correct version.');
@@ -43,7 +43,7 @@ test('An RTP packet with extensions', function (t) {
   t.equal(p.getSyncSourceID(), 0x0f55a39f, 'has the expected sync source ID.');
   t.deepEqual(p.getContributionSourceIDs(), [], 'has no contribution soruce IDs.');
   t.ok(typeof p.getExtensions() === 'object', 'has defined extensions.');
-  t.deepEqual(p.getPayload(), new Buffer([0x9d, 0x74]), 'has the expected payload.');
+  t.deepEqual(p.getPayload(), Buffer.from([0x9d, 0x74]), 'has the expected payload.');
   var x = p.getExtensions();
 
   t.equal(x.profile, 0xbede, 'is an RFC5285 one-byte header extension set.');
@@ -53,7 +53,7 @@ test('An RTP packet with extensions', function (t) {
     t.ok(Buffer.isBuffer(x['id' + id]), 'extension ' + id + ' has a buffer value.');
     t.equal(x['id' + id].length, bytes.length, 'extension ' + id + ' has the ' +
         'correct length of ' + bytes.length + '.');
-    t.deepEqual(x['id' + id], new Buffer(bytes), 'extension ' + id + ' has the ' +
+    t.deepEqual(x['id' + id], Buffer.from(bytes), 'extension ' + id + ' has the ' +
         'expected bytes.');
   }
   testExtValue(1, [0x00, 0x00, 0x56, 0x40, 0x63, 0xf4, 0x1c, 0x9c, 0x38, 0x00]);
@@ -69,7 +69,7 @@ test('An RTP packet with extensions', function (t) {
   t.end();
 });
 
-test('An RTP packet with no extensions', function (t) {
+test('An RTP packet with no extensions', t => {
   var p = new RTPPacket(packetNoExtension);
   //console.log(JSON.stringify(p, null, 2));
   t.equal(p.getVersion(), 2, 'has the correct version.');
@@ -83,12 +83,12 @@ test('An RTP packet with no extensions', function (t) {
   t.equal(p.getSyncSourceID(), 0x0f55a39f, 'has the expected sync source ID.');
   t.deepEqual(p.getContributionSourceIDs(), [], 'has no contribution soruce IDs.');
   t.equal(p.getExtensions(), undefined, 'has undefined extensions.');
-  t.deepEqual(p.getPayload(), new Buffer([0x9d, 0x74]), 'has the expected payload.');
+  t.deepEqual(p.getPayload(), Buffer.from([0x9d, 0x74]), 'has the expected payload.');
   t.equal(p.isStart(5), false, 'is not marked as start.');
   t.end();
 });
 
-test('A default new RTP packet', function (t) {
+test('A default new RTP packet', t => {
   var p = new RTPPacket;
   t.equal(p.getVersion(), 2, 'has the correct version.');
   t.equal(p.getPadding(), false, 'has no padding.');
@@ -105,7 +105,7 @@ test('A default new RTP packet', function (t) {
   t.end();
 });
 
-test('Creating an RTP packet with extensions', function (t) {
+test('Creating an RTP packet with extensions', t => {
   var p = new RTPPacket(1500);
   t.equal(p.setVersion(2), 2, 'can set the version.');
   t.equal(p.getVersion(), 2, 'has the correct version.');
@@ -135,7 +135,7 @@ test('Creating an RTP packet with extensions', function (t) {
   t.end();
 });
 
-test('Setting an array of CSRC values', function (t) {
+test('Setting an array of CSRC values', t => {
   var p = new RTPPacket(1500);
   t.deepEqual(p.setContributionSourceIDs([12345, 54321, 424242]),
     [12345, 54321, 424242], 'can set some CSRC IDs.');

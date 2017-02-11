@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ module.exports = function (RED) {
     var source = null;
     var flow = null;
     var recvr = null;
-    (new Promise(function (complete, reject) {
+    (new Promise((complete, reject) => {
       if (!config.sender) return complete();
       if (config.sender.startsWith('http')) return complete();
       var selectionTimer = null;
@@ -54,16 +54,14 @@ module.exports = function (RED) {
       var browser = mdns.createBrowser('_nmos-query._tcp.local.');
       mdns.excludeInterface('0.0.0.0');
       function selectCandidate(candidates) {
-        function extractPri(x) {
+        var extractPri = x => {
           console.log(x.txt[0]);
           var match = x.txt[0].match(/pri=([0-9]+)/);
           if (match) return +match[1];
           else return NaN;
         }
         if (candidates.length > 0) {
-          var selected = candidates.sort(function (x, y) {
-            return extractPri(x) > extractPri(y);
-          })[0];
+          var selected = candidates.sort((x, y) => extractPri(x) > extractPri(y))[0];
           node.log(`Selected query service at http://${selected.addresses[0]}:${selected.port} ` +
             `with priority ${extractPri(selected)}.`);
           if (config.sender.indexOf('=') < 0 && !config.sender.endsWith('/'))
@@ -77,36 +75,33 @@ module.exports = function (RED) {
           reject('Failed to find a query service.');
         }
       }; // selectCandidate
-      browser.on('ready', function () {
+      browser.on('ready', () => {
         node.log('Ready for MDNS.');
         candidates = [];
         browser.discover();
       });
-      browser.on('update', function (data) {
+      browser.on('update', (data) => {
         node.log('MDNS update');
         if (data.fullname && data.fullname.indexOf('_nmos-query._tcp') >= 0) {
           node.log(`Found a query service ${data.fullname} ${(data.txt.length > 0) ? data.txt[0] : ""}`);
           candidates.push(data);
-          if (!selectionTimer) selectionTimer = setTimeout(function () {
+          if (!selectionTimer) selectionTimer = setTimeout(() => {
             selectCandidate(candidates);
           }, 1000);
         };
       });
       browser.on('error', reject);
-
-    })).then(function () {
-      return new Promise(function (complete, reject) {
+    })).then(() => {
+      return new Promise((complete, reject) => {
         if (!config.sender) return complete();
-        http.get(config.sender, function (res) {
+        http.get(config.sender, (res) => {
           res.on('error', reject);
           if (!res.statusCode === 200)
             return reject(`Error code ${res.statusCode} when requesting sender details.`);
           var senderStr = '';
           res.setEncoding('utf8');
-          res.on('data', function (chunk) {
-            senderStr += chunk;
-          });
-          res.on('end', function () {
+          res.on('data', chunk => { senderStr += chunk; });
+          res.on('end',  () => {
             var sender = JSON.parse(senderStr);
             if (Array.isArray(sender)) sender = sender[0];
             config.sdpURL = sender.manifest_href;
@@ -116,10 +111,8 @@ module.exports = function (RED) {
         });
       });
     })
-    .then(function () {
-      return this.sdpURLReader(config);
-    }.bind(this))
-    .then(function (data) {
+    .then(() => this.sdpURLReader(config))
+    .then(data => {
       var localName = config.name || `${config.type}-${config.id}`;
       var localDescription = config.description || `${config.type}-${config.id}`;
       console.log(config.device,
@@ -137,28 +130,24 @@ module.exports = function (RED) {
         pipelinesID, ledger.transports.rtp_mcast,
         (typeof config.sender === 'string' && config.sender.length > 0) ?
           { sender_id : config.sender } : null);
-        return nodeAPI.putResource(source);
-    }.bind(this))
-    .then(function () {
-      return nodeAPI.putResource(flow);
+      return nodeAPI.putResource(source);
     })
-    .then(function () {
-      return nodeAPI.putResource(recvr);
-    })
-    .then(function () {
+    .then(() => nodeAPI.putResource(flow))
+    .then(() => nodeAPI.putResource(recvr))
+    .then(() => {
       console.log('Starting highland pipeline.');
       var is6184 = this.tags.encodingName[0].toLowerCase() === 'h264';
       this.highland(
         udpInlet(client, this.sdp, 0, config.netif)
         .pipe(udpToGrain(this.exts, this.tags.format[0].endsWith('video') &&
           this.tags.encodingName[0] === 'raw'))
-        .map(function (g) {
+        .map(g => {
           if (is6184) H264.backToAVC(g);
           if (!config.regenerate) {
             return new Grain(g.buffers, g.ptpSync, g.ptpOrigin, g.timecode,
               flow.id, source.id, g.duration);
           }
-          var grainTime = new Buffer(10);
+          var grainTime = Buffer.allocUnsafe(10);
           grainTime.writeUIntBE(this.baseTime[0], 0, 6);
           grainTime.writeUInt32BE(this.baseTime[1], 6);
           var grainDuration = g.getDuration();
@@ -168,21 +157,21 @@ module.exports = function (RED) {
             this.baseTime[1] % 1000000000];
           return new Grain(g.buffers, grainTime, g.ptpOrigin, g.timecode,
             flow.id, source.id, g.duration);
-        }.bind(this))
+        })
         .pipe(grainConcater(this.tags))
       );
-    }.bind(this))
-    .catch(function(err) {
+    })
+    .catch((err) {
       if (err) return node.log(`Unable to start NMOS RTP in: ${err}`);
     });
-    this.on('close', function () {
+    this.on('close', () => {
       this.close();
       if (browser) browser.stop();
       nodeAPI.deleteResource(recvr, "receiver")
-      .catch(function (err) {
+      .catch(err => {
         node.log(`Unable to de-register resource: ${err}`);
       });
-    }.bind(this)); // Delete flows when we're done?
+    }); // Delete flows when we're done?
   }
   util.inherits(NmosRTPIn, redioactive.Funnel);
   RED.nodes.registerType("nmos-rtp-in", NmosRTPIn);

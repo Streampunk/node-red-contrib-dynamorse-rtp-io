@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ function compact6184 (g, payloadSize) {
   if (state === DATA) endPointer = b.length;
   if (endPointer > rangePointer) nextNAL(b.slice(rangePointer, endPointer));
 
-  var stapA = new Buffer(
+  var stapA = Buffer.allocUnsafe(
     ((nals.aud) ? nals.aud.length + 2 : 0) +
     ((nals.sps) ? nals.sps.length + 2 : 0) +
     ((nals.pps) ? nals.pps.length + 2 : 0) + 1);
@@ -137,7 +137,7 @@ function compact6184 (g, payloadSize) {
     var nalType = nal[0] & 0x1f;
     nal = nal.slice(1);
     while (nal.length > 0) {
-      var p = new Buffer(payloadSize);
+      var p = Buffer.allocUnsafe(payloadSize);
       p.writeUInt8(nals.max_ref_idc | 28, 0);
       p.writeUInt8(nalType, 1);
       var written = nal.copy(p, 2);
@@ -149,21 +149,21 @@ function compact6184 (g, payloadSize) {
     return payloads;
   }
 
-  nals.seis.forEach(function (sei) {
-    splitNal(sei).forEach(function (y) { g.buffers.push(y); });
+  nals.seis.forEach(sei => {
+    splitNal(sei).forEach(y => { g.buffers.push(y); });
   });
 
-  nals.slices.forEach(function (slice) {
-    splitNal(slice).forEach(function (y) { g.buffers.push(y); });
+  nals.slices.forEach(slice => {
+    splitNal(slice).forEach(y => { g.buffers.push(y); });
   });
 
   return g;
 }
 
-const zzzOne = new Buffer([0, 0, 0, 1]);
+const zzzOne = Buffer.from([0, 0, 0, 1]);
 
 function backToAVC (g) {
-  g.buffers = g.buffers.map(function (b) {
+  g.buffers = g.buffers.map(b => {
     if (b.length === 0) return 0;
     if (b.readUInt8(0) & 0x80 !== 0) {
       console.error('Forbidden zero bit in an H.264 stream is one!');
@@ -171,7 +171,7 @@ function backToAVC (g) {
     }
     switch (b.readUInt8(0) & 0x1f) {
       case 12:
-        return new Buffer(0);
+        return Buffer.allocUnsafe(0);
       case 24:
         var pos = 1;
         var bufs = [];
@@ -190,7 +190,7 @@ function backToAVC (g) {
           case 0x80: // Start
             return Buffer.concat([
               zzzOne,
-              new Buffer([(b.readUInt8(0) & 0x60) | (b.readUInt8(1) & 0x1f)]),
+              Buffer.from([(b.readUInt8(0) & 0x60) | (b.readUInt8(1) & 0x1f)]),
               b.slice(2)], b.length + 3);
           case 0x40: // end
             return b.slice(2);

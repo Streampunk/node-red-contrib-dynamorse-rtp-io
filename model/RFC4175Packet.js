@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -132,11 +132,11 @@ RFC4175Packet.prototype.toJSON = function () {
   var j = RTPPacket.prototype.toJSON.call(this);
   // console.log(this, this.shrinkPayload);
   j.extendedSequenceNumber = this.getExtendedSequenceNumber();
-  j.lines = this.getLineData().map(function (l) {
+  j.lines = this.getLineData().map(l => {
     return { length : l.length, lineNo : l.lineNo, offset : l.offset,
       fieldID : l.fieldID, continuation : l.continuation,
       data : this.shrinkPayload(l.data) };
-  }.bind(this));
+  });
   return j;
 }
 

@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ SDP.prototype.parse = function (s) {
   }
   var media = sdp;
   var sdpLines = s.split(/\r?\n/);
-  sdpLines.forEach(function (l) {
+  sdpLines.forEach(l => {
     var m = l.trim().match(/^([a-z])=(.*)$/)
     if (m !== null) {
       if (m[1] === 'm') {
@@ -96,7 +96,7 @@ SDP.prototype.parse = function (s) {
  * @return [Array.<string>] List of available media names.
  */
 SDP.prototype.getMediaHeaders = function () {
-  return this.m.map(function (x) { return x.m; });
+  return this.m.map(x => x.m);
 }
 
 /**
@@ -110,7 +110,7 @@ SDP.prototype.getExtMapReverse = function (i) {
   var extMap = this.m[i].a.extmap;
   if (!Array.isArray(extMap)) return {};
   var revMap = {};
-  extMap.forEach(function (x) {
+  extMap.forEach(x => {
     var w = x.match(/([0-9][0-9]?)\s([^\s]+)\.*/);
     if (w !== null) {
       revMap[w[2]] = +w[1];
@@ -126,37 +126,35 @@ var mediaOrder = [ 'm', 'i', 'c', 'b', 'k', 'a' ];
 
 SDP.prototype.toString = function () {
   var sdp = '';
-  sessionOrder.forEach(function (x) {
+  sessionOrder.forEach(x => {
     if (x === 'a' && this.a !== undefined) {
       for ( var z in this.a ) {
-        this.a[z].forEach(function (w) {
+        this.a[z].forEach(w => {
           sdp += 'a=' + z + ((w.length > 0) ? ':' : '') + w + '\n';
-        }.bind(this));
+        });
       }
     } else {
       if (this[x] !== undefined) {
         if (moreThanOne[x]) {
-          this[x].forEach(function (y) {
-            sdp += x + '=' + y + '\n';
-          }.bind(this));
+          this[x].forEach(y => { sdp += x + '=' + y + '\n'; });
         } else {
           sdp += x + '=' + this[x] + '\n';
         }
       }
     }
-  }.bind(this));
-  this.m.forEach(function (x) {
-    mediaOrder.forEach(function (y) {
+  });
+  this.m.forEach(x => {
+    mediaOrder.forEach(y => {
       if (y === 'a' && x[y] !== undefined) {
         for ( var z in x.a) {
-          x.a[z].forEach(function (w) {
+          x.a[z].forEach(w => {
             sdp += 'a=' + z + ((w.length > 0) ? ':' : '') + w + '\n';
           });
         }
       } else {
         if (x[y] !== undefined) {
           if (moreThanOne[y]) {
-            x[y].forEach(function (z) {
+            x[y].forEach(z => {
               sdp += y + '=' + z + '\n';
             });
           } else {
@@ -280,9 +278,9 @@ SDP.prototype.getTimestampReferenceClock = function (i) {
 SDP.prototype.getSMPTETimecodeParameters = function (i) {
   if (i >= this.m.length) return undefined;
   if (this.m[i].a !== undefined && Array.isArray(this.m[i].a.extmap)) {
-    var tcLine = this.m[i].a.extmap.map(function (x) {
-      return x.match(/[0-9][0-9]?\s+urn:ietf:params:rtp-hdrext:smpte-tc\s(\S+).*/);
-    }).find(function (x) { return x !== null; });
+    var tcLine = this.m[i].a.extmap
+    .map(x => x.match(/[0-9][0-9]?\s+urn:ietf:params:rtp-hdrext:smpte-tc\s(\S+).*/))
+    .find(x => x !== null);
     if (tcLine) {
       return tcLine[1];
     }

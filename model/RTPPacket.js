@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ RTPPacket.prototype.initBuffer = function (size) {
   if (size < 100)
     return new Error('Size of RTP packet is too small. Must be' +
       'greater than 99.');
-  var b = new Buffer(size).fill(0);
+  var b = Buffer.alloc(size);
   b[0] = 0x80; // Version = 2, padding = false, extension = false, csrc = 0
   b[1] = 96; // Marker = false, payload type = 96 (should be as SDP file 96-127)
   // Sequence number, timestamp and sstc not set here
@@ -185,11 +185,10 @@ RTPPacket.prototype.getContributionSourceIDs = function () {
 RTPPacket.prototype.setContributionSourceIDs = function (c) {
   if (!c || !Array.isArray(c))
     return new Error('Contribution source identifiers must be an array.')
-  if (!c.every(function (x) {
-      return x && typeof x === 'number' && x >= 0 && x <= 0xffffffff; }))
+  if (!c.every((x) => x && typeof x === 'number' && x >= 0 && x <= 0xffffffff))
     return new Error('Each contribution source identifier must be a 32-bit ' +
       'unsigned integer.');
-  c = c.map(function (x) { return x|0; });
+  c = c.map(x => x|0);
   this.setCSRCCount(c.length);
   for ( var x = 0 ; x < c.length ; x++)
     this.buffer.writeUInt32BE(c[x], 12 + x * 4);
@@ -234,7 +233,7 @@ RTPPacket.prototype.setExtensions = function (x) {
     return new Error('Cannot set extensions unless a profile property exists, ' +
         'is a number in the range 0 to 65535.');
   var extensionBase = 12 + this.getCSRCCount() * 4;
-  var preserveLineData = new Buffer(this.buffer.slice(this.getPayloadStart(),
+  var preserveLineData = Buffer.from(this.buffer.slice(this.getPayloadStart(),
     this.getPayloadStart() + 30));
   if (x.profile !== 0xbede) {
     if (!x.extensionData || !Buffer.isBuffer(x.extensionData))
@@ -252,7 +251,7 @@ RTPPacket.prototype.setExtensions = function (x) {
     return x;
   } else {
     var position = extensionBase + 4;
-    Object.keys(x).forEach(function (k) {
+    Object.keys(x).forEach(k => {
       var id = k.match(/id([1-9][1-4]?)/);
       if (id) {
         id = +id[1];
@@ -264,7 +263,7 @@ RTPPacket.prototype.setExtensions = function (x) {
           position += len + 2;
         }
       }
-    }.bind(this));
+    });
     while ((position - extensionBase) % 4 !== 0) { this.buffer[position++] = 0; }
     this.buffer.writeUInt16BE(x.profile, extensionBase);
     this.buffer.writeUInt16BE((position - extensionBase - 4) / 4, extensionBase + 2);

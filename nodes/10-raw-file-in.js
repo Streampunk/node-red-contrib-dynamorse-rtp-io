@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ var Grain = require('node-red-contrib-dynamorse-core').Grain;
 var H = require('highland');
 var uuid = require('uuid');
 
-const emptyBuf = new Buffer(0);
+const emptyBuf = Buffer.alloc(0);
 
 function rawInlet(file, sizes, loop) {
   var flowID = uuid.v4();
@@ -32,7 +32,7 @@ function rawInlet(file, sizes, loop) {
   var desired = (typeof sizes === 'number') ? sizes : 0;
   var remaining = null;
   var grainCount = 0;
-  var fixedChomper = function (err, x, push, next) {
+  var fixedChomper = (err, x, push, next) => {
     if (err) {
       push(err);
       next();
@@ -57,7 +57,7 @@ function rawInlet(file, sizes, loop) {
   };
   var nextGrain = null;
   var nextLength = null;
-  var variableChomper = function (err, x, push, next) {
+  var variableChomper = (err, x, push, next) => {
     if (err) {
       push(err);
       next();
@@ -87,7 +87,7 @@ function rawInlet(file, sizes, loop) {
       next();
     }
   };
-  return H(function (push, next) {
+  return H((push, next) => {
       push(null, H(fs.createReadStream(file)));
       grainCount = 0;
       next();
@@ -104,7 +104,7 @@ module.exports = function (RED) {
     RED.nodes.createNode(this,config);
     redioactive.Funnel.call(this, config);
     if (!this.context().global.get('updated'))
-      return this.log(`Waiting for global context updated. ${this.context().global.get('updated')}`);
+      return this.log(`Waiting for global context to be updated. ${this.context().global.get('updated')}`);
     var node = this;
 
     this.tags = {};
@@ -121,16 +121,16 @@ module.exports = function (RED) {
                             +config.grainDuration.split('/')[1] ];
 
     fsaccess(config.file, fs.R_OK)
-    .then(function () {
+    .then(() => {
       if (config.headers) {
         return fsaccess(config.headers, fs.R_OK);
       }
       if (+config.grainSize <= 0)
         return Promise.reject(new Error('No headers file and grain size is zero.'));
     })
-    .then(function () {
+    .then(() => {
       if (config.headers) {
-        return fsreadFile(config.headers).then(JSON.parse).then(function (heads) {
+        return fsreadFile(config.headers).then(JSON.parse).then(heads => {
           node.headers = heads;
           if (node.headers.length > 0 && node.headers[0].contentType) {
             var contentType = node.headers[0].contentType;
@@ -146,7 +146,7 @@ module.exports = function (RED) {
               console.log('***!!!£££ tags.packing = ', tags.packing, mime[2]);
             }
             var parameters = contentType.match(/\b(\w+)=(\S+)\b/g);
-            parameters.forEach(function (p) {
+            parameters.forEach(p => {
               var splitP = p.split('=');
               if (splitP[0] === 'rate') splitP[0] = 'clockRate';
               tags[splitP[0]] = [ splitP[1] ];
@@ -161,7 +161,7 @@ module.exports = function (RED) {
         return null;
       }
     })
-    .then(function (tags) {
+    .then(tags => {
       if (!tags) {
         console.log("Failed to read tags");
         return node.sdpURLReader(config);
@@ -169,7 +169,7 @@ module.exports = function (RED) {
         return tags;
       }
     })
-    .then(function (tags) {
+    .then(tags => {
       node.tags = tags;
       var localName = config.name || `${config.type}-${config.id}`;
       var localDescription = config.description || `${config.type}-${config.id}`;
@@ -185,21 +185,21 @@ module.exports = function (RED) {
         null, localName, localDescription,
         "urn:x-nmos:format:" + node.tags.format[0], node.tags, node.source.id,
         (config.regenerate === true && node.headers.length > 0) ? [ node.headers[0].flow_id ] : []);
-      return nodeAPI.putResource(node.source).then(function () {
-        return nodeAPI.putResource(node.flow); });
+      return nodeAPI.putResource(node.source)
+        .then(() => nodeAPI.putResource(node.flow));
     })
-    .then(function () {
+    .then(() => {
       node.highland(
         rawInlet(
           config.file,
           (node.headers.length === 0) ? +config.grainSize : node.headers,
           config.loop)
-        .map(function (g) {
+        .map(g => {
           if (node.headers.length > 0 && config.regenerate === false) {
             return new Grain(g.buffers, g.ptpSync, g.ptpOrigin, g.timecode,
               node.flow.id, node.source.id, g.duration);
           } // otherwise regenerate grain metadata
-          var grainTime = new Buffer(10);
+          var grainTime = Buffer.allocUnsafe(10);
           grainTime.writeUIntBE(node.baseTime[0], 0, 6);
           grainTime.writeUInt32BE(node.baseTime[1], 6);
           var grainDuration = g.getDuration();

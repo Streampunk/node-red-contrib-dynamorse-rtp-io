@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -31,19 +31,19 @@ module.exports = function (RED) {
     redioactive.Funnel.call(this, config);
     // Do not run unless global config has been established
     if (!this.context().global.get('updated'))
-      return this.log('Waiting for global context updated.');
-    fs.access(config.file, fs.R_OK, function (e) {
+      return this.log('Waiting for global context to be updated.');
+    fs.access(config.file, fs.R_OK, e => {
       if (e) {
         return this.preFlightError(e);
       }
-    }.bind(this));
+    });
     var node = this;
     this.tags = {};
     this.grainCount = 0;
     this.baseTime = [ Date.now() / 1000|0, (Date.now() % 1000) * 1000000 ];
     var nodeAPI = this.context().global.get('nodeAPI');
     var ledger = this.context().global.get('ledger');
-    this.sdpURLReader(config, function (err, data) {
+    this.sdpURLReader(config, (err, data) => {
       if (err) {
         return this.preFlightError(err);
       }
@@ -58,22 +58,22 @@ module.exports = function (RED) {
         "urn:x-nmos:format:" + this.tags.format[0], null, null, pipelinesID, null);
       var flow = new ledger.Flow(null, null, localName, localDescription,
         "urn:x-nmos:format:" + this.tags.format[0], this.tags, source.id, null);
-      nodeAPI.putResource(source, function(err, result) {
+      nodeAPI.putResource(source, (err, result) => {
         if (err) return node.log(`Unable to register source: ${err}`);
       });
-      nodeAPI.putResource(flow).then(function () {
+      nodeAPI.putResource(flow).then(() => {
         var is6184 = this.tags.encodingName[0].toLowerCase() === 'h264';
         this.highland(
           pcapInlet(config.file, config.loop)
           .pipe(udpToGrain(this.exts, this.tags.format[0].endsWith('video') &&
             this.tags.encodingName[0] === 'raw'))
-          .map(function (g) {
+          .map(g => {
             if (is6184) H264.backToAVC(g);
             if (!config.regenerate) {
               return new Grain(g.buffers, g.ptpSync, g.ptpOrigin, g.timecode,
                 flow.id, source.id, g.duration);
             }
-            var grainTime = new Buffer(10);
+            var grainTime = Buffer.allocUnsafe(10);
             grainTime.writeUIntBE(this.baseTime[0], 0, 6);
             grainTime.writeUInt32BE(this.baseTime[1], 6);
             var grainDuration = g.getDuration();
@@ -83,12 +83,12 @@ module.exports = function (RED) {
               this.baseTime[1] % 1000000000];
             return new Grain(g.buffers, grainTime, g.ptpOrigin, g.timecode,
               flow.id, source.id, g.duration);
-          }.bind(this))
+          })
           .pipe(grainConcater(this.tags)));
-      }.bind(this), function(err, result) {
+      }, (err, result) => {
         if (err) return node.log(`Unable to register flow: ${err}`);
       });
-    }.bind(this));
+    });
     this.on('close', this.close); // Delete flows when we're done?
   }
   util.inherits(PCAPReader, redioactive.Funnel);

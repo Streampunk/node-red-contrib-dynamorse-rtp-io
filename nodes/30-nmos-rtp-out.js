@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ module.exports = function (RED) {
     var node = this;
     // Set up connection
     var sock = dgram.createSocket({type  :'udp4', reuseAddr : true});
-    var bindCb = function (err) {
+    var bindCb = err => {
       if (err) return node.warn(err);
       sock.setMulticastTTL(config.ttl);
     };
@@ -106,11 +106,11 @@ module.exports = function (RED) {
     var lastSend = null;
     var Packet = null;
     var packetsPerGrain = 100;
-    this.each(function (g, next) {
+    this.each((g, next) => {
       this.log(`Received grain ${Grain.prototype.formatTimestamp(g.ptpSync)}.`);
       if (!Grain.isGrain(g)) return node.warn('Received a non-grain on the input.');
       if (!this.tags) {
-        this.getNMOSFlow(g, function (err, f) {
+        this.getNMOSFlow(g, (err, f) => {
           if (err) return node.warn(`Failed to resolve NMOS flow ${uuid.unparse(g.flow_id)}: ${err}`);
           this.srcFlow = f;
           this.tags = f.tags;
@@ -149,19 +149,19 @@ module.exports = function (RED) {
           sdp = SDP.makeSDP(config, this.tags, rtpExts, rtpTsOffset);
           nodeAPI.putSDP(senderID, sdp.toString());
           pushGrain(g, next);
-        }.bind(this));
+        });
       } else {
       //  for ( var x = 0 ; x < 99 ; x++ ) { pushGrain(g, function () { }); }
         pushGrain(g, next);
         // console.log(process.memoryUsage());
       }
-    }.bind(this));
+    });
     var count = 0, timeoutTune = 0;
     var grainTimer = process.hrtime();
     function pushGrain (g, next) {
       console.log(':-)', process.hrtime(grainTimer));
       if (is6184) H264.compact(g, 1410);
-      var masterBuffer = new Buffer(packetsPerGrain*1452);
+      var masterBuffer = Buffer.alloc(packetsPerGrain*1452);
       var pc = 0;
       grainTimer = process.hrtime();
       lineStatus = (is4175) ? {
@@ -175,7 +175,7 @@ module.exports = function (RED) {
 
       // Make grain start RTP header extension
       var startExt = { profile : 0xbede };
-      startExt['id' + rtpExts.grain_flags_id] = new Buffer([0x80]);
+      startExt['id' + rtpExts.grain_flags_id] = Buffer.from([0x80]);
       startExt['id' + rtpExts.origin_timestamp_id] = g.ptpOrigin;
       startExt['id' + rtpExts.sync_timestamp_id] = g.ptpSync;
       startExt['id' + rtpExts.grain_duration_id] = g.duration;
@@ -237,7 +237,7 @@ module.exports = function (RED) {
         }
       }
       var endExt = { profile : 0xbede };
-      endExt['id' + rtpExts.grain_flags_id] = new Buffer([0x40]);
+      endExt['id' + rtpExts.grain_flags_id] = Buffer.from([0x40]);
       packet.setExtensions(endExt);
       packet.setMarker(true);
       packet.setPayload(b);
@@ -273,7 +273,7 @@ module.exports = function (RED) {
     }
     function makePacket (g, remaining, buf, pc) {
       // var packetMaker = process.hrtime();
-      // var buf = new Buffer(1452);
+      // var buf = Buffer.alloc(1452);
       // var packet = new Packet(buf);
       // var bufAlloc = process.hrtime(packetMaker);
       var packet = new Packet(buf.slice(pc*1452, pc*1452+1452));
@@ -310,8 +310,7 @@ module.exports = function (RED) {
       packetBuffers.push(p.buffer);
       if (done) {
         packetCount++;
-          sock.send(packetBuffers, 0, p.length, config.port, config.address,
-          function (e) {
+          sock.send(packetBuffers, 0, p.length, config.port, config.address, e => {
             callbackCount++;
             // done();
             if (e) return console.error(e);
@@ -321,17 +320,17 @@ module.exports = function (RED) {
         packetTime = process.hrtime();
       }
     }
-    this.errors(function (e, next) {
+    this.errors((e, next) => {
       this.warn(`Received unhandled error: ${e.message}.`);
       if (config.timeout === 0) setImmediate(next);
       else setTimeout(next, config.timeout);
-    }.bind(this));
-    this.done(function () {
+    });
+    this.done(() => {
       this.log('Stream has all dried up!');
       if (sock) sock.close();
       nodeAPI.deleteResource(source.id, 'source').catch(node.warn);
       // TODO remove other resources?
-    }.bind(this));
+    });
   }
   util.inherits(NMOSRTPOut, redioactive.Spout);
   RED.nodes.registerType("nmos-rtp-out", NMOSRTPOut);

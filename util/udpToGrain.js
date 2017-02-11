@@ -1,4 +1,4 @@
-/* Copyright 2016 Streampunk Media Ltd.
+/* Copyright 2017 Streampunk Media Ltd.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ module.exports = function (exts, pgroup) {
   var payloads = [];
   var ex = exts;
   var started = false;
-  var udpConsumer = function (err, x, push, next) {
+  var udpConsumer = (err, x, push, next) => {
     if (err) {
       push(err);
       next();
@@ -70,7 +70,7 @@ module.exports = function (exts, pgroup) {
           source_id = rtpex['id' + ex.source_id_id];
         } else if (started === true && rtp.isEnd(ex.grain_flags_id)) {
           if (pushLines) {
-            rtp.getLineData().forEach(function (x) { payloads.push(x.data); })
+            rtp.getLineData().forEach(x => { payloads.push(x.data); })
           } else {
             payloads.push(rtp.getPayload());
           }
@@ -78,7 +78,7 @@ module.exports = function (exts, pgroup) {
             smpte_tc, flow_id, source_id, grain_duration));
         } else if (started == true) {
           if (pushLines) {
-            rtp.getLineData().forEach(function (x) { payloads.push(x.data); })
+            rtp.getLineData().forEach(x => { payloads.push(x.data); })
           } else {
             payloads.push(rtp.getPayload());
           }
@@ -92,5 +92,5 @@ module.exports = function (exts, pgroup) {
   };
   return H.pipeline(
     H.consume(udpConsumer),
-    H.errors(function (err, push) { console.error('udpToGrain: ' + err); }));
+    H.errors((err, push) => { console.error('udpToGrain: ' + err); }));
 }
