@@ -12,6 +12,7 @@
     "highland": "^2.10.2",
     "mdns-js": "^0.5.3",
     "netadon" : "^0.1.0",
+    "node-red-contrib-dynamorse-core": "^0.1.0",
     "promise": "^7.1.1",
     "uuid": "^2.0.1"
   },
