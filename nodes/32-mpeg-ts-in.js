@@ -40,8 +40,8 @@ module.exports = function (RED) {
         .pipe(tesladon.readPESPackets(true))
         .filter(x => x.type === 'PESPacket' && x.pid === 4096)
         .map(x => new Grain(x.payloads,
-          `${x.pts / 90000|0}:${(((x.pts % 90000) / 90000.0) * 1000000000) >>> 0}`,
-          `${x.pts / 90000|0}:${(((x.pts % 90000) / 90000.0) * 1000000000) >>> 0}`,
+          tesladon.tsTimeToPTPTime(x.pts),
+          tesladon.tsTimeToPTPTime(x.pts),
           null, flowID, sourceID, "25/1")));
     });
   }
