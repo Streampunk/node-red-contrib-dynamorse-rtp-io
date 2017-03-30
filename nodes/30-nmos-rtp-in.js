@@ -161,7 +161,7 @@ module.exports = function (RED) {
         .pipe(grainConcater(this.tags))
       );
     })
-    .catch((err) {
+    .catch((err) => {
       if (err) return node.log(`Unable to start NMOS RTP in: ${err}`);
     });
     this.on('close', () => {

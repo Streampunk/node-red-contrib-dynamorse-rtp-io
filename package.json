@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-dynamorse-rtp-io",
-  "version": "0.0.9",
+  "version": "0.1.2",
   "description": "Dynamorse RTP IO nodes for Node-RED",
   "author": "Streampunk Media Ltd",
   "license": "Apache-2.0",
@@ -8,16 +8,17 @@
     "node-red"
   ],
   "dependencies": {
-    "codecadon": "^0.0.9",
-    "highland": "^2.10.1",
-    "mdns-js": "^0.5.0",
-    "netadon" : "^0.0.5",
+    "codecadon": "^0.1.0",
+    "highland": "^2.10.2",
+    "mdns-js": "^0.5.3",
+    "netadon" : "^0.1.0",
+    "node-red-contrib-dynamorse-core": "^0.1.0",
     "promise": "^7.1.1",
     "uuid": "^2.0.1",
     "tesladon": "0.0.3"
   },
   "devDependencies": {
-    "dynamorse-test": "^0.0.6"
+    "dynamorse-test": "^0.1.1"
   },
   "scripts": {
     "test": "tape test/*Spec.js"
