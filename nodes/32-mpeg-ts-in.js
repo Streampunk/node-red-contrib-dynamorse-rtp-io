@@ -39,6 +39,7 @@ module.exports = function (RED) {
         .pipe(tesladon.readPMTs(true))
         .pipe(tesladon.readPESPackets(true))
         .filter(x => x.type === 'PESPacket' && x.pid === 4096)
+        .doto(console.log)
         .map(x => new Grain(x.payloads,
           tesladon.tsTimeToPTPTime(x.pts),
           tesladon.tsTimeToPTPTime(x.pts),
