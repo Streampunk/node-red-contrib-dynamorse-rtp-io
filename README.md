@@ -1,7 +1,7 @@
 [![CircleCI](https://circleci.com/gh/Streampunk/node-red-contrib-dynamorse-rtp-io.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/Streampunk/node-red-contrib-dynamorse-rtp-io)
 # node-red-contrib-dynamorse-rtp-io
 
-A set of nodes for IBM's [Node-RED](http://nodered.org) that support network input/output over RTP. This package is a component of Streampunk Media's [dynamorse](https://github.com/Streampunk/node-red-contrib-dynamorse-core#readme) suite.
+A set of nodes for IBM's [Node-RED](http://nodered.org) that support network input/output over [RTP](https://en.wikipedia.org/wiki/Real-time_Transport_Protocol) and the processing of [MPEG transport streams](https://en.wikipedia.org/wiki/MPEG_transport_stream). This package is a component of Streampunk Media's [dynamorse](https://github.com/Streampunk/node-red-contrib-dynamorse-core#readme) suite.
 
 ## Installation
 

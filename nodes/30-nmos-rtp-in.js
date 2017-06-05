@@ -15,7 +15,7 @@
 
 var redioactive = require('node-red-contrib-dynamorse-core').Redioactive;
 var util = require('util');
-var SDPProcessing = require('../util/SDPProcessing.js');
+var SDPProcessing = require('node-red-contrib-dynamorse-core').SDPProcessing;
 var dgram = require('netadon');
 var udpInlet = require('../util/udpInlet.js');
 var udpToGrain = require('../util/udpToGrain.js');

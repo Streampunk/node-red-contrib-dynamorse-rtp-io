@@ -22,7 +22,7 @@ var udpToGrain = require('../util/udpToGrain.js');
 var grainConcater = require('../util/grainConcater.js');
 var Grain = require('node-red-contrib-dynamorse-core').Grain;
 var util = require('util');
-var SDPProcessing = require('../util/SDPProcessing.js');
+var SDPProcessing = require('node-red-contrib-dynamorse-core').SDPProcessing;
 var H264 = require('../util/H264.js');
 
 module.exports = function (RED) {

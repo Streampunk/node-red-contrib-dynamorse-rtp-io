@@ -18,10 +18,10 @@ var util = require('util');
 var RFC4175Packet = require('../model/RFC4175Packet.js');
 var RTPPacket = require('../model/RTPPacket.js');
 var Grain = require('node-red-contrib-dynamorse-core').Grain;
-var SDP = require('../model/SDP.js');
+var SDP = require('node-red-contrib-dynamorse-core').SDPProcessing.SDP;
 var dgram = require('netadon');
 var uuid = require('uuid');
-var Net = require('../util/Net.js');
+var Net = require('node-red-contrib-dynamorse-core').Net;
 var util = require('util');
 var H264 = require('../util/H264.js');
 

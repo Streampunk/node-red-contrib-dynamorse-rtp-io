@@ -14,7 +14,7 @@
 */
 
 var H = require('highland');
-var SDP = require('../model/SDP');
+var SDP = require('node-red-contrib-dynamorse-core').SDPProcessing.SDP;
 
 module.exports = function (client, sdpOrAddress, port, netif) {
   var sdpStream = (SDP.isSDP(sdpOrAddress)) ? H([sdp]) : H([]);
