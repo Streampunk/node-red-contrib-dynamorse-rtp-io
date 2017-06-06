@@ -28,9 +28,24 @@ module.exports = function (RED) {
 
     if (!this.context().global.get('updated'))
       return this.log('Waiting for global context to be updated.');
+    var nodeAPI = this.context().global.get('nodeAPI');
+    var ledger = this.context().global.get('ledger');
+    var source = null;
+    var flow = null;
+    var tags = {};
+    var localName = config.name || `${config.type}-${config.id}`;
+    var localDescription = config.description || `${config.type}-${config.id}`;
+    var pipelinesID = config.device ?
+      RED.nodes.getNode(config.device).nmos_id :
+      this.context().global.get('pipelinesID');
+    source = new ledger.Source(null, null, localName, localDescription,
+      "urn:x-nmos:format:" + this.tags.format[0], null, null, pipelinesID, null);
+    flow = new ledger.Flow(null, null, localName, localDescription,
+      "urn:x-nmos:format:" + this.tags.format[0], this.tags, source.id, null);
+
     var node = this;
-    var flowID = uuid.v4();
-    var sourceID = uuid.v4();
+    var flowID = flow.id;
+    var sourceID = source.id;
     http.get(config.source, res => {
       this.highland(H(res)
         .pipe(tesladon.bufferGroup(188))
