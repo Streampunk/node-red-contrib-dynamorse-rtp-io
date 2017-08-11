@@ -68,7 +68,7 @@ function pcapInlet(file, loop) {
         } else {
           leftOver = b.slice(packetEnd);
           packetEnd = b.length;
-          breahInHeader = false;
+          breakInHeader = false;
         }
       }
 
