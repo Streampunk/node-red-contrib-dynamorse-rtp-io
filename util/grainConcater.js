@@ -15,16 +15,15 @@
 
 var Grain = require('node-red-contrib-dynamorse-core').Grain;
 var codecadon = require('codecadon');
-var grainProcessor = require('./grainProcessor.js');
 var H = require('highland');
 
-module.exports = function(srcTags) {
+module.exports = function(node, srcTags) {
   var concater = new codecadon.Concater(() => {
-    console.log('Concater exiting');
+    node.log('Concater exiting');
   });
 
   var dstSampleSize = concater.setInfo(srcTags);
-  var isVideo = srcTags.format[0] === 'video';
+  var isVideo = srcTags.format === 'video';
 
   var grainMuncher = (err, x, push, next) => {
     if (err) {
@@ -41,12 +40,12 @@ module.exports = function(srcTags) {
           dstBufSize = x.buffers.reduce((x, y) => x + y.length, 0);
         }
         var dstBuf = Buffer.allocUnsafe(dstBufSize);
-        var numQueued = concater.concat(x.buffers, dstBuf, (err, result) => {
+        concater.concat(x.buffers, dstBuf, (err, result) => {
           if (err) {
             push(err);
           } else if (result) {
             push(null, new Grain(result, x.ptpSync, x.ptpOrigin,
-                                 x.timecode, x.flow_id, x.source_id, x.duration));
+              x.timecode, x.flow_id, x.source_id, x.duration));
           }
           next();
         });
@@ -58,4 +57,4 @@ module.exports = function(srcTags) {
   };
 
   return H.pipeline(H.consume(grainMuncher));
-}
+};

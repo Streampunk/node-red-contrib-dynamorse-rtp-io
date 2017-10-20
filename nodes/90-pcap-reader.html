@@ -30,7 +30,6 @@
     created fresh.
   - format -> Flow.format and Source.format
   - description -> Flow.description and Source.description
-  - device -> Source.device_id
   - regenerate === true -> Flow.parents and Source.parents set to values from PCAP
   - Flow.tags set from media-specific properties
 -->
@@ -46,7 +45,6 @@
       regenerate : { value : false },
       format : { value : "video" },
       description : { value : "" },
-      device : { value : "", type : "device" },
       sdpURL : { value : "" },
       encodingName : { value : "raw" },
       clockRate : { value : 90000, validate : RED.validators.number() },
@@ -103,10 +101,6 @@
   <div class="form-row">
     <label for="node-input-description"><i class="fa fa-info-circle"></i> description</label>
     <input type="text" id="node-input-description" placeholder="source and flow description">
-  </div>
-  <div class="form-row">
-    <label for="node-input-device"><i class="fa fa-tablet"></i> device</label>
-    <input type="text" id="node-input-device">
   </div>
   <!-- Media-specific properties, either derived from an SDP file or given parameters -->
   <p>Either enter a link to a SDP file describing the stream or provide parameters.</p>
@@ -252,10 +246,6 @@
    <tr>
     <td><i class="fa fa-info-circle"></i> description</td>
     <td>Optional description of the this NMOS source and output flow.</td>
-   </tr>
-   <tr>
-    <td><i class="fa fa-tablet"></i> device</td>
-    <td>Select or create an NMOS device for this source and flow.</td>
    </tr>
    <tr>
     <td><i class="fa fa-external-link-square"></i> SDP URL</td>

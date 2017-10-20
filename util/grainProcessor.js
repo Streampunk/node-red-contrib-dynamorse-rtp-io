@@ -42,14 +42,14 @@ module.exports = function(process) {
             push(err);
           } else if (result) {
             push(null, new Grain(result, x.ptpSync, x.ptpOrigin,
-                                 x.timecode, x.flow_id, x.source_id, x.duration));
+              x.timecode, x.flow_id, x.source_id, x.duration));
           }
           next();
         });
         // allow a number of packets to queue ahead
         if (numQueued < 2) {
           next();
-          }
+        }
       } else {
         push(null, x);
         next();
@@ -58,4 +58,4 @@ module.exports = function(process) {
   };
 
   return H.pipeline(H.consume(grainMuncher));
-}
+};

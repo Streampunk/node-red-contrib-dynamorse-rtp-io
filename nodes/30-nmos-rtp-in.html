@@ -22,7 +22,6 @@
       name: { value : '' },
       maxBuffer : { value : 10, validate : RED.validators.number() },
       description : { value : '' },
-      device : { value : '', type : 'device' },
       sender : { value : '', validate : function (v) { return v || v.length > 0 || this.sdpURL.length > 0; } },
       sdpURL : { value : '', validate : function (v) { return v || v.length > 0 || this.sender.length > 0; } },
       netif : { value : '0.0.0.0', validate : RED.validators.regex(/((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/) },
@@ -50,10 +49,6 @@
   <div class="form-row">
     <label for="node-input-description"><i class="fa fa-info-circle"></i> description</label>
     <input type="text" id="node-input-description" placeholder="source and flow description">
-  </div>
-  <div class="form-row">
-    <label for="node-input-device"><i class="fa fa-tablet"></i> device</label>
-    <input type="text" id="node-input-device">
   </div>
   <p>Either enter an href, id or query string for a NMOS sender or a link to a SDP file.</p>
   <div class="form-row">
@@ -103,10 +98,6 @@
    <tr>
     <td><i class="fa fa-info-circle"></i> description</td>
     <td>Optional description of the this NMOS source and output flow.</td>
-   </tr>
-   <tr>
-    <td><i class="fa fa-tablet"></i> device</td>
-    <td>Select or create an NMOS device for the output source and flow.</td>
    </tr>
    <tr>
     <td><i class="fa fa-paper-plane" aria-hidden="true"></i> sender</td>

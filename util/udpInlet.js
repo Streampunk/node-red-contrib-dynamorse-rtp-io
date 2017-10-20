@@ -19,23 +19,24 @@ var SDP = require('node-red-contrib-dynamorse-core').SDPProcessing.SDP;
 module.exports = function (client, sdpOrAddress, port, netif) {
   var sdpStream = (SDP.isSDP(sdpOrAddress)) ? H([sdp]) : H([]);
   var address = sdpOrAddress;
+  // var ttl = 0;
   if (SDP.isSDP(sdpOrAddress)) {
     var sdp = sdpOrAddress;
     address = sdp.getConnectionAddress(0);
     port = sdp.getPort(0);
     // netif = sdp.getOriginUnicastAddress();
-    ttl = sdp.getConnectionTTL(0);
+    // ttl = sdp.getConnectionTTL(0);
   }
   if (!netif) netif = '0.0.0.0';
-  var errorStream = H('error', client).map(function (e) { throw e; });
-  var messageStream = H('message', client, ['msg', 'rinfo']).map(function (o) { return o.msg; });
-  var listenStream = H('listening', client).map(function () { return { state: 'listening' }; });
-  var closeStream = H('close', client).map(function () { return { state: 'closed' }; })
-  client.bind(port, function(err) {
+  var errorStream = H('error', client).map(e => { throw e; });
+  var messageStream = H('message', client, ['msg', 'rinfo']).map(o => o.msg);
+  var listenStream = H('listening', client).map(() => { return { state: 'listening' }; });
+  var closeStream = H('close', client).map(() => { return { state: 'closed' }; });
+  client.bind(port, err => {
     if (err) return console.error('Client bind error', err);
     // console.log('Successfully bound!');
     client.addMembership(address, netif);
     // if (typeof ttl === 'number') client.setMulticastTTL(ttl);
   });
   return sdpStream.concat(H.merge([errorStream, messageStream, listenStream, closeStream]));
-}
+};

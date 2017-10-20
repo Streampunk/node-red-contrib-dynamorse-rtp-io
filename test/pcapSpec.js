@@ -14,27 +14,26 @@
 */
 
 var TestUtil = require('dynamorse-test').TestUtil;
-var util = require('util');
 
 var pcapTestNode = JSON.stringify({
-  "type": "pcap-reader",
-  "z": TestUtil.testFlowId,
-  "name": "pcap-reader-test",
-  "maxBuffer": 10,
-  "wsPort": TestUtil.properties.wsPort,
-  "x": 100.0,
-  "y": 100.0,
-  "wires": [[]]
+  'type': 'pcap-reader',
+  'z': TestUtil.testFlowId,
+  'name': 'pcap-reader-test',
+  'maxBuffer': 10,
+  'wsPort': TestUtil.properties.wsPort,
+  'x': 100.0,
+  'y': 100.0,
+  'wires': [[]]
 });
-var pcapNodeId = "24fde3d7.b7544c";
-var spoutNodeId = "f2186999.7e5f78";
+var pcapNodeId = '24fde3d7.b7544c';
+var spoutNodeId = 'f2186999.7e5f78';
 
 TestUtil.nodeRedTest('A pcap-reader->spout flow is posted to Node-RED', {
   pcapFilename: __dirname + '/data/rtp-video-rfc4175-1080i50-colour.pcap',
   sdpFilename: __dirname + '/data/sdp_rfc4175_10bit_1080i50.sdp',
   maxBuffer: 10,
   spoutTimeout: 0
-}, function getFlow(params) {
+}, params => {
   var testFlow = JSON.parse(TestUtil.testNodes.baseTestFlow);
   testFlow.nodes[0] = JSON.parse(pcapTestNode);
   testFlow.nodes[0].id = pcapNodeId;
@@ -47,7 +46,7 @@ TestUtil.nodeRedTest('A pcap-reader->spout flow is posted to Node-RED', {
   testFlow.nodes[1].id = spoutNodeId;
   testFlow.nodes[1].timeout = params.spoutTimeout;
   return testFlow;
-}, function onMsg(t, params, msgObj, onEnd) {
+}, (t, params, msgObj, onEnd) => {
   //t.comment(`Message: ${JSON.stringify(msgObj)}`);
   if (msgObj.hasOwnProperty('receive')) {
     TestUtil.checkGrain(t, msgObj.receive);

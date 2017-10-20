@@ -19,33 +19,21 @@ var util = require('util');
 var http = require('http');
 var tesladon = require('tesladon');
 var H = require('highland');
-var uuid = require('uuid');
 
 module.exports = function (RED) {
   function MPEGTSIn (config) {
     RED.nodes.createNode(this,config);
     redioactive.Funnel.call(this, config);
 
-    if (!this.context().global.get('updated'))
-      return this.log('Waiting for global context to be updated.');
-    var nodeAPI = this.context().global.get('nodeAPI');
-    var ledger = this.context().global.get('ledger');
-    var source = null;
-    var flow = null;
-    var tags = {};
-    var localName = config.name || `${config.type}-${config.id}`;
-    var localDescription = config.description || `${config.type}-${config.id}`;
-    var pipelinesID = config.device ?
-      RED.nodes.getNode(config.device).nmos_id :
-      this.context().global.get('pipelinesID');
-    source = new ledger.Source(null, null, localName, localDescription,
-      "urn:x-nmos:format:" + this.tags.format[0], null, null, pipelinesID, null);
-    flow = new ledger.Flow(null, null, localName, localDescription,
-      "urn:x-nmos:format:" + this.tags.format[0], this.tags, source.id, null);
+    this.warn('!!! tags not yet implemented !!!');
+    this.tags = { format: 'video' };
+    let cableSpec = {};
+    cableSpec[this.tags.format] = [{ tags : this.tags }];
+    cableSpec.backPressure = `${this.tags.format}[0]`;
+    this.makeCable(cableSpec);
+    var flowID = this.flowID();
+    var sourceID = this.sourceID();
 
-    var node = this;
-    var flowID = flow.id;
-    var sourceID = source.id;
     http.get(config.source, res => {
       this.highland(H(res)
         .pipe(tesladon.bufferGroup(188))
@@ -58,9 +46,9 @@ module.exports = function (RED) {
         .map(x => new Grain(x.payloads,
           tesladon.tsTimeToPTPTime(x.pts),
           tesladon.tsTimeToPTPTime(x.pts),
-          null, flowID, sourceID, "25/1")));
+          null, flowID, sourceID, '25/1')));
     });
   }
   util.inherits(MPEGTSIn, redioactive.Funnel);
-  RED.nodes.registerType("mpeg-ts-in", MPEGTSIn);
-}
+  RED.nodes.registerType('mpeg-ts-in', MPEGTSIn);
+};

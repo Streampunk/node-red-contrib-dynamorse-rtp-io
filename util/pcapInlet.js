@@ -19,7 +19,6 @@ var H = require('highland');
 function pcapInlet(file, loop) {
   var nextLen = 0;
   var chunks = 0;
-  var packets = 0;
   var leftOver = null;
   var breakInHeader = false;
   var pcapConsumer = function (err, b, push, next) {
@@ -44,7 +43,6 @@ function pcapInlet(file, loop) {
       } else {
         if (!breakInHeader) {
           push(null, Buffer.concat([leftOver, b], nextLen).slice(42));
-          packets++;
           packetEnd = nextLen - leftOver.length;
         }
       }
@@ -57,7 +55,6 @@ function pcapInlet(file, loop) {
         packetEnd += (breakInHeader) ? 16 - leftOver.length : 16;
         if (packetEnd + nextLen <= b.length) {
           push(null, b.slice(packetEnd + 42, packetEnd + nextLen));
-          packets++;
           packetEnd += nextLen;
           breakInHeader = false;
           if (b.length - packetEnd < 16) {
@@ -75,13 +72,12 @@ function pcapInlet(file, loop) {
       // console.log('Calling Highland next');
       next();
     }
-  }
+  };
 
-  var lumps = 0;
-  return H(function (push, next) {
-      push(null, H(fs.createReadStream(file)));
-      next();
-    })
+  return H((push, next) => {
+    push(null, H(fs.createReadStream(file)));
+    next();
+  })
     .take(loop ? Number.MAX_SAFE_INTEGER : 1)
     .sequence()
     .consume(pcapConsumer);

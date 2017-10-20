@@ -22,7 +22,6 @@ var SDP = require('node-red-contrib-dynamorse-core').SDPProcessing.SDP;
 var dgram = require('netadon');
 var uuid = require('uuid');
 var Net = require('node-red-contrib-dynamorse-core').Net;
-var util = require('util');
 var H264 = require('../util/H264.js');
 
 // TODO add IPv6 support
@@ -37,35 +36,45 @@ var fieldMap = {
 };
 
 function getStride (tags) {
-  if (tags.encodingName[0] === 'raw') {
-    var depth = +tags.depth[0];
-    var spp = (tags.sampling[0].indexOf('4:4:4') >= 0) ? 3 :
-       ((tags.sampling[0].indexOf('4:2:2') >= 0) ? 2 : 1.5);
+  if (tags.encodingName === 'raw') {
+    var depth = tags.depth;
+    var spp = (tags.sampling.indexOf('4:4:4') >= 0) ? 3 :
+      ((tags.sampling.indexOf('4:2:2') >= 0) ? 2 : 1.5);
     switch (depth) {
-       case 8: return Math.ceil(spp);
-       case 10: return 5;
-       case 16: return spp * 2;
+    case 8: return Math.ceil(spp);
+    case 10: return 5;
+    case 16: return spp * 2;
     }
-  } else if (tags.format[0] === 'audio') {
-    if (tags.blockAlign) return +tags.blockAlign[0];
-    return +tags.channels[0] * +tags.encodingName[0].substring(1) / 8|0;
+  } else if (tags.format === 'audio') {
+    if (tags.blockAlign) return tags.blockAlign;
+    return tags.channels * tags.encodingName.substring(1) / 8|0;
   } else {
     return 1;
   }
 }
 
 function getByteFactor (tags) {
-  var depth = +tags.depth[0];
-  var width = +tags.width[0];
-  var spp = (tags.sampling[0].indexOf('4:4:4') >= 0) ? 3 :
-     ((tags.sampling[0].indexOf('4:2:2') >= 0) ? 2 : 1.5);
+  var depth = tags.depth;
+  var spp = (tags.sampling.indexOf('4:4:4') >= 0) ? 3 :
+    ((tags.sampling.indexOf('4:2:2') >= 0) ? 2 : 1.5);
   return spp * depth / 8;
 }
 
+function checkNMOSFlow(nodeAPI, flowID) {
+  return new Promise((resolve/*, reject*/) => {
+    setTimeout(() => {
+      nodeAPI.getResource(flowID, 'flow')
+        .then(f => resolve(f), 
+          () => resolve(null));
+    }, 10);
+  });
+}
+ 
 module.exports = function (RED) {
   function NMOSRTPOut (config) {
     RED.nodes.createNode(this, config);
     redioactive.Spout.call(this, config);
+
     var seq = (Math.random() * 0xffffffff) >>> 0;
     var payloadType = 96;
     var rtpTsOffset = (Math.random() * 0xffffffff) >>> 0;
@@ -78,12 +87,12 @@ module.exports = function (RED) {
     var clockRate = 48000;
     var stride = 1;
     var syncSourceID = (Math.random() * 0xffffffff) >>> 0;
-    var initState = true;
     var tsAdjust = 0; // Per packet timestamp adjustment - for samples / fields
     var lineStatus = null;
-    var is4175 = false;
-    this.srcFlow = null;
     var node = this;
+    var srcFlowID = null;
+    var srcTags = null;
+
     // Set up connection
     var sock = dgram.createSocket({type  :'udp4', reuseAddr : true});
     var bindCb = err => {
@@ -92,6 +101,7 @@ module.exports = function (RED) {
     };
     if (config.netif) { sock.bind(config.port, config.netif, bindCb); }
     else { sock.bind(config.port, bindCb); }
+
     var nodeAPI = this.context().global.get('nodeAPI');
     var ledger = this.context().global.get('ledger');
     var rtpExtDefID = this.context().global.get('rtp_ext_id');
@@ -99,65 +109,84 @@ module.exports = function (RED) {
     var localName = config.name || `${config.type}-${config.id}`;
     var localDescription = config.description || `${config.type}-${config.id}`;
     var genericID = this.context().global.get('genericID');
-    var source = null;
-    var flow = null;
+    var senderID = null;
     var sender = null;
     var sdp = null;
     var lastSend = null;
     var Packet = null;
     var packetsPerGrain = 100;
+
     this.each((g, next) => {
       this.log(`Received grain ${Grain.prototype.formatTimestamp(g.ptpSync)}.`);
-      if (!Grain.isGrain(g)) return node.warn('Received a non-grain on the input.');
-      if (!this.tags) {
-        this.getNMOSFlow(g, (err, f) => {
-          if (err) return node.warn(`Failed to resolve NMOS flow ${uuid.unparse(g.flow_id)}: ${err}`);
-          this.srcFlow = f;
-          this.tags = f.tags;
-          clockRate = +f.tags.clockRate[0];
-          is4175 = f.tags.encodingName[0] === 'raw';
-          is6184 = f.tags.encodingName[0].toLowerCase() === 'h264';
-          if (is4175) {
-            width = +f.tags.width[0];
-            height = +f.tags.height[0];
-            byteFactor = getByteFactor(f.tags);
-            interlace = f.tags.interlace && (f.tags.interlace[0] === '1' || f.tags.interlace[0] === 'true');
-            Packet = RFC4175Packet;
-            packetsPerGrain = width * height * byteFactor * 1.1 / 1452|0;
-          } else {
-            Packet = RTPPacket;
-            // contentType = `${f.tags.format[0]}/${f.tags.encodingName[0]}`;
-            // if (f.tags.clockRate) contentType += `; rate=${f.tags.clockRate[0]}`;
-            // if (f.tags.channels) contentType += `; channels=${f.tags.channels[0]}`;
-            // TODO something less arbitrary - problem is first H264 packet is small
-            packetsPerGrain = (is6184) ? 1000 : (g.getPayloadSize() / 1400|0) + 5;
-          }
-          stride = getStride(f.tags);
-          source = new ledger.Source(null, null, localName, localDescription,
-            "urn:x-nmos:format:" + this.tags.format[0], null, null, genericID, null);
-          flow = new ledger.Flow(null, null, localName, localDescription,
-            "urn:x-nmos:format:" + this.tags.format[0], this.tags, source.id, [ this.srcFlow.id ]);
-          var senderID = uuid.v4();
-          sender = new ledger.Sender(senderID, null, localName, localDescription,
-            flow.id, Net.isMulticast(config.address) ?
-              "urn:x-nmos:transport:rtp.mcast" : "urn:x-nmos:transport:rtp.ucast",
-            genericID, // TODO do better at binding to an address
-            `http://${Net.getFirstRealIP4Interface().address}:${nodeAPI.getPort()}/sdp/${senderID}.sdp`);
-          nodeAPI.putResource(source).catch(node.warn);
-          nodeAPI.putResource(flow).catch(node.warn);
-          nodeAPI.putResource(sender).catch(node.warn);
-          sdp = SDP.makeSDP(config, this.tags, rtpExts, rtpTsOffset);
-          nodeAPI.putSDP(senderID, sdp.toString());
-          pushGrain(g, next);
-        });
-      } else {
-      //  for ( var x = 0 ; x < 99 ; x++ ) { pushGrain(g, function () { }); }
-        pushGrain(g, next);
-        // console.log(process.memoryUsage());
+      if (!Grain.isGrain(g)) {
+        node.warn('Received a non-grain on the input.');
+        return next();
       }
+
+      var nextJob = srcTags ?
+        Promise.resolve(g) :
+        this.findCable(g)
+          .then(cable => {
+            let isVideo = Array.isArray(cable[0].video) && cable[0].video.length > 0;
+            srcFlowID = isVideo ? cable[0].video[0].flowID : cable[0].audio[0].flowID;
+            srcTags = isVideo ? cable[0].video[0].tags : cable[0].audio[0].tags;
+
+            clockRate = srcTags.clockRate;
+            is4175 = srcTags.encodingName === 'raw';
+            is6184 = srcTags.encodingName.toLowerCase() === 'h264';
+            if (is4175) {
+              width = srcTags.width;
+              height = srcTags.height;
+              byteFactor = getByteFactor(srcTags);
+              interlace = srcTags.interlace;
+              Packet = RFC4175Packet;
+              packetsPerGrain = width * height * byteFactor * 1.1 / 1452|0;
+            } else {
+              Packet = RTPPacket;
+              // contentType = `${srcTags.format}/${srcTags.encodingName}`;
+              // if (srcTags.clockRate) contentType += `; rate=${srcTags.clockRate}`;
+              // if (srcTags.channels) contentType += `; channels=${srcTags.channels}`;
+              // TODO something less arbitrary - problem is first H264 packet is small
+              packetsPerGrain = (is6184) ? 1000 : (g.getPayloadSize() / 1400|0) + 5;
+            }
+            stride = getStride(srcTags);
+          })
+          .then(() => {
+            const numTries = 10;
+            let chain = Promise.resolve(null);
+            for (let i=0; i<numTries; ++i) {
+              chain = chain.then(f => {
+                if (null === f) return checkNMOSFlow(nodeAPI, srcFlowID);
+                else return Promise.resolve(f);
+              });
+            }
+            return chain;
+          })
+          .then(() => {
+            senderID = uuid.v4();
+            sender = new ledger.Sender(senderID, null, localName, localDescription,
+              srcFlowID, Net.isMulticast(config.address) ?
+                'urn:x-nmos:transport:rtp.mcast' : 'urn:x-nmos:transport:rtp.ucast',
+              genericID, // TODO do better at binding to an address
+              `http://${Net.getFirstRealIP4Interface().address}:${nodeAPI.getPort()}/sdp/${senderID}.sdp`);
+
+            nodeAPI.putResource(sender)
+              .then(() => {
+                sdp = SDP.makeSDP(config, srcTags, rtpExts, rtpTsOffset);
+                nodeAPI.putSDP(senderID, sdp.toString());
+              })
+              .then(() =>  node.log(`Registered NMOS sender resource ${senderID}.`))
+              .catch(node.warn);
+          });
+      
+      nextJob.then(() => {
+        pushGrain(g, next);
+      });
     });
-    var count = 0, timeoutTune = 0;
+
+    var count = 0; //, timeoutTune = 0;
     var grainTimer = process.hrtime();
+
     function pushGrain (g, next) {
       console.log(':-)', process.hrtime(grainTimer));
       if (is6184) H264.compact(g, 1410);
@@ -186,7 +215,7 @@ module.exports = function (RED) {
       if (actualExts.prototype && actualExts.prototype.name === 'Error')
         node.warn(`Failed to set header extensions: ${actualExts}`);
 
-      var i = 0, o = 0; y = 0;
+      var i = 0, o = 0;
       var b = g.buffers[i];
       while (i < g.buffers.length) {
         if (is6184) {
@@ -213,7 +242,7 @@ module.exports = function (RED) {
             } else {
               var newLineOff = o + (t - lineStatus.linePos) + lineStatus.bytesPerLine;
               packet.setPayload(Buffer.concat([b.slice(o, o + (t - lineStatus.linePos)),
-                                               b.slice(newLineOff, newLineOff + lineStatus.linePos)], t));
+                b.slice(newLineOff, newLineOff + lineStatus.linePos)], t));
               o = newLineOff + lineStatus.linePos;
             }
           } else {
@@ -226,7 +255,7 @@ module.exports = function (RED) {
           remaining = 1410; // Slightly short so last header fits
           packet = makePacket(g, remaining, masterBuffer, pc++);
         } else if (++i < g.buffers.length) {
-          console.log("Getting next buffer."); // Not called when one buffer per grain - now the default
+          console.log('Getting next buffer.'); // Not called when one buffer per grain - now the default
           b = Buffer.concat([b.slice(o), g.buffers[i]],
             b.length + g.buffers[i].length - o);
           o = 0;
@@ -301,23 +330,23 @@ module.exports = function (RED) {
       return packet;
     }
 
-    var packetCount = 0;
-    var callbackCount = 0;
-    var packetTime = process.hrtime();
+    // var packetCount = 0;
+    // var callbackCount = 0;
+    // var packetTime = process.hrtime();
     var packetBuffers = [];
     function sendPacket (p, done) {
       // console.log('\_/', p.getExtension(), p.getExtendedSequenceNumber(), p.getSequenceNumber());
       packetBuffers.push(p.buffer);
       if (done) {
-        packetCount++;
-          sock.send(packetBuffers, 0, p.length, config.port, config.address, e => {
-            callbackCount++;
-            // done();
-            if (e) return console.error(e);
-          });
+        // packetCount++;
+        sock.send(packetBuffers, config.port, config.address, e => {
+          // callbackCount++;
+          // done();
+          if (e) return console.error(e);
+        });
         packetBuffers = [];
         // console.log('+++', packetCount, callbackCount, process.hrtime(packetTime)[1]/1000000);
-        packetTime = process.hrtime();
+        // packetTime = process.hrtime();
       }
     }
     this.errors((e, next) => {
@@ -328,10 +357,10 @@ module.exports = function (RED) {
     this.done(() => {
       this.log('Stream has all dried up!');
       if (sock) sock.close();
-      nodeAPI.deleteResource(source.id, 'source').catch(node.warn);
+      nodeAPI.deleteResource(senderID, 'sender').catch(node.warn);
       // TODO remove other resources?
     });
   }
   util.inherits(NMOSRTPOut, redioactive.Spout);
-  RED.nodes.registerType("nmos-rtp-out", NMOSRTPOut);
-}
+  RED.nodes.registerType('nmos-rtp-out', NMOSRTPOut);
+};

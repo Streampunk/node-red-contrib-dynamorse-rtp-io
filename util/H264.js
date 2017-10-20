@@ -32,76 +32,76 @@ function compact6184 (g, payloadSize) {
   }
   function testMaxRefIDC(value) {
     if (value & 0x60 > nals.max_ref_idc)
-     nals.max_ref_idc = value & 0x60;
+      nals.max_ref_idc = value & 0x60;
     return value & 0x1f;
   }
   function nextNAL(nal) {
     switch (testMaxRefIDC(nal[0])) {
-      case 9:
-        nals.aud = nal;
-        nals.max_ref_idc = (nal[0])
-        break;
-      case 7:
-        nals.sps = nal;
-        break;
-      case 8:
-        nals.pps = nal;
-        break;
-      case 6:
-        nals.seis.push(nal);
-        break;
-      case 5:
-        nals.slices.push(nal);
-        break;
-      default:
-        console.log('Unexpected NAL unit type.');
-        break;
+    case 9:
+      nals.aud = nal;
+      nals.max_ref_idc = (nal[0]);
+      break;
+    case 7:
+      nals.sps = nal;
+      break;
+    case 8:
+      nals.pps = nal;
+      break;
+    case 6:
+      nals.seis.push(nal);
+      break;
+    case 5:
+      nals.slices.push(nal);
+      break;
+    default:
+      console.log('Unexpected NAL unit type.');
+      break;
     }
   }
   var b = g.buffers[0];
   for ( var x = 0 ; x < b.length ; x++ ) {
     switch (state) {
-      case START:
-        if (b[x] === 0) state = START_ZERO;
-        break;
-      case START_ZERO:
-        if (b[x] === 0) state = START_ZERO_ZERO;
-        else state = START;
-        break;
-      case START_ZERO_ZERO:
-        switch (b[x]) {
-          case 0: break;
-          case 1: state = START_ZERO_ZERO_ONE; break;
-          default: state = START; break;
-        }
-        break;
-      case START_ZERO_ZERO_ONE:
-        rangePointer = x;
-        state = DATA;
-        break;
-      case DATA:
-        if (b[x] === 0) state = ZERO;
-        break;
-      case ZERO:
-        endPointer = x - 1;
-        if (b[x] === 0) state = ZERO_ZERO;
-        else state = DATA;
-        break;
-      case ZERO_ZERO:
-        switch (b[x]) {
-          case 0: break;
-          case 1: state = ZERO_ZERO_ONE; break;
-          default: state = DATA; break;
-        }
-        break;
-      case ZERO_ZERO_ONE:
-        nextNAL(b.slice(rangePointer, endPointer));
-        rangePointer = x;
-        state = DATA;
-        break;
-      default:
-        console.error('H264 compaction - unknown state.');
-        break;
+    case START:
+      if (b[x] === 0) state = START_ZERO;
+      break;
+    case START_ZERO:
+      if (b[x] === 0) state = START_ZERO_ZERO;
+      else state = START;
+      break;
+    case START_ZERO_ZERO:
+      switch (b[x]) {
+      case 0: break;
+      case 1: state = START_ZERO_ZERO_ONE; break;
+      default: state = START; break;
+      }
+      break;
+    case START_ZERO_ZERO_ONE:
+      rangePointer = x;
+      state = DATA;
+      break;
+    case DATA:
+      if (b[x] === 0) state = ZERO;
+      break;
+    case ZERO:
+      endPointer = x - 1;
+      if (b[x] === 0) state = ZERO_ZERO;
+      else state = DATA;
+      break;
+    case ZERO_ZERO:
+      switch (b[x]) {
+      case 0: break;
+      case 1: state = ZERO_ZERO_ONE; break;
+      default: state = DATA; break;
+      }
+      break;
+    case ZERO_ZERO_ONE:
+      nextNAL(b.slice(rangePointer, endPointer));
+      rangePointer = x;
+      state = DATA;
+      break;
+    default:
+      console.error('H264 compaction - unknown state.');
+      break;
     }
   }
   if (state === DATA) endPointer = b.length;
@@ -170,38 +170,38 @@ function backToAVC (g) {
       return b;
     }
     switch (b.readUInt8(0) & 0x1f) {
-      case 12:
-        return Buffer.allocUnsafe(0);
-      case 24:
-        var pos = 1;
-        var bufs = [];
-        var total = 0;
-        while(pos < b.length - 2 &&
+    case 12:
+      return Buffer.allocUnsafe(0);
+    case 24:
+      var pos = 1;
+      var bufs = [];
+      var total = 0;
+      while(pos < b.length - 2 &&
             (pos + b.readUInt16BE(pos) + 2) <= b.length) {
-          var length = b.readUInt16BE(pos);
-          bufs.push(zzzOne);
-          bufs.push(b.slice(pos + 2, pos + 2 + length));
-          pos += 2 + length;
-          total += 4 + length;
-        }
-        return Buffer.concat(bufs, total);
-      case 28:
-        switch (b.readUInt8(1) & 0xc0) {
-          case 0x80: // Start
-            return Buffer.concat([
-              zzzOne,
-              Buffer.from([(b.readUInt8(0) & 0x60) | (b.readUInt8(1) & 0x1f)]),
-              b.slice(2)], b.length + 3);
-          case 0x40: // end
-            return b.slice(2);
-          default: // middle
-            return b.slice(2);
-        }
-      default:
-        return Buffer.concat([zzzOne, b], b.length + 4);
+        var length = b.readUInt16BE(pos);
+        bufs.push(zzzOne);
+        bufs.push(b.slice(pos + 2, pos + 2 + length));
+        pos += 2 + length;
+        total += 4 + length;
+      }
+      return Buffer.concat(bufs, total);
+    case 28:
+      switch (b.readUInt8(1) & 0xc0) {
+      case 0x80: // Start
+        return Buffer.concat([
+          zzzOne,
+          Buffer.from([(b.readUInt8(0) & 0x60) | (b.readUInt8(1) & 0x1f)]),
+          b.slice(2)], b.length + 3);
+      case 0x40: // end
+        return b.slice(2);
+      default: // middle
+        return b.slice(2);
+      }
+    default:
+      return Buffer.concat([zzzOne, b], b.length + 4);
     }
   });
-};
+}
 
 module.exports = {
   compact : compact6184,

@@ -15,8 +15,8 @@
 
 var H = require('highland');
 var Grain = require('node-red-contrib-dynamorse-core').Grain;
-var RTPPacket = require('../model/RTPPacket.js')
-var RFC4175Packet = require('../model/RFC4175Packet.js')
+var RTPPacket = require('../model/RTPPacket.js');
+var RFC4175Packet = require('../model/RFC4175Packet.js');
 
 // exts is an object with the index properties origin_timestamp_id, flow_id_id etc.
 // defined
@@ -25,7 +25,7 @@ module.exports = function (exts, pgroup) {
   var pushLines = pgroup;
   var rtpCounter = -2;
   var origin_timestamp, smpte_tc, flow_id, source_id,
-    grain_flags, sync_timestamp, grain_duration;
+    sync_timestamp, grain_duration;
   var payloads = [];
   var ex = exts;
   var started = false;
@@ -48,7 +48,7 @@ module.exports = function (exts, pgroup) {
               if (pushLines && (nextCounter & 0xffff === 0xffff)) {
                 // TODO remove this line when BBC bug is fixed
                 push(new Error('Detected BBC wrap around bug.'));
-                nextCounter = (rtpCounter & 0xffff0000) | 0xffff
+                nextCounter = (rtpCounter & 0xffff0000) | 0xffff;
               } else {
                 push(new Error('RTP sequence discontinuity. Expected ' +
                   (rtpCounter + 1) + ', got ' + nextCounter + '.'));
@@ -59,8 +59,7 @@ module.exports = function (exts, pgroup) {
         rtpCounter = nextCounter;
         if (rtp.isStart(ex.grain_flags_id)) {
           started = true;
-          payloads = (pushLines) ? rtp.getLineData().map(function (x) {
-            return x.data }) : [ rtp.getPayload() ];
+          payloads = (pushLines) ? rtp.getLineData().map(x => x.data) : [ rtp.getPayload() ];
           var rtpex = rtp.getExtensions();
           origin_timestamp = rtpex['id' + ex.origin_timestamp_id];
           sync_timestamp = rtpex['id' + ex.sync_timestamp_id];
@@ -70,7 +69,7 @@ module.exports = function (exts, pgroup) {
           source_id = rtpex['id' + ex.source_id_id];
         } else if (started === true && rtp.isEnd(ex.grain_flags_id)) {
           if (pushLines) {
-            rtp.getLineData().forEach(x => { payloads.push(x.data); })
+            rtp.getLineData().forEach(x => { payloads.push(x.data); });
           } else {
             payloads.push(rtp.getPayload());
           }
@@ -78,7 +77,7 @@ module.exports = function (exts, pgroup) {
             smpte_tc, flow_id, source_id, grain_duration));
         } else if (started == true) {
           if (pushLines) {
-            rtp.getLineData().forEach(x => { payloads.push(x.data); })
+            rtp.getLineData().forEach(x => { payloads.push(x.data); });
           } else {
             payloads.push(rtp.getPayload());
           }
@@ -92,5 +91,5 @@ module.exports = function (exts, pgroup) {
   };
   return H.pipeline(
     H.consume(udpConsumer),
-    H.errors((err, push) => { console.error('udpToGrain: ' + err); }));
-}
+    H.errors((err/*, push*/) => { console.error('udpToGrain: ' + err); }));
+};

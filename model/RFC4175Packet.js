@@ -25,20 +25,20 @@ RFC4175Packet.prototype.constructor = RFC4175Packet;
 
 RFC4175Packet.prototype.getExtendedSequenceNumber = function () {
   return this.buffer.readUInt16BE(this.getPayloadStart());
-}
+};
 
 RFC4175Packet.prototype.setExtendedSequenceNumber = function (n) {
   this.buffer.writeUInt16BE(n, this.getPayloadStart());
-}
+};
 
 RFC4175Packet.prototype.getCompleteSequenceNumber = function () {
   return (this.getExtendedSequenceNumber() << 16) | this.getSequenceNumber();
-}
+};
 
 RFC4175Packet.prototype.setCompleteSequenceNumber = function (n) {
   this.setExtendedSequenceNumber(n >>> 16);
   this.setSequenceNumber(n & 65535);
-}
+};
 
 RFC4175Packet.prototype.getLineData = function () {
   var lineDataStart = this.getPayloadStart() + 2;
@@ -63,7 +63,7 @@ RFC4175Packet.prototype.getLineData = function () {
     lineDataStart += lines[x].length;
   }
   return lines;
-}
+};
 
 /*
  * Line status is an object with linePos, lineNo, width, height, stride, bytesPerLine,
@@ -79,7 +79,7 @@ RFC4175Packet.prototype.setLineDataHeaders = function (lineStatus, remaining) {
       this.buffer.writeUInt16BE(bytesLeftOnLine, lineDataStart);
       this.buffer.writeUInt16BE(lineStatus.lineNo++ & 0x7fff, lineDataStart + 2);
       this.buffer.writeUInt16BE((lineStatus.linePos / lineStatus.byteFactor) & 0x7fff,
-          lineDataStart + 4);
+        lineDataStart + 4);
       if (lineStatus.fieldBreaks.field2Start && lineStatus.lineNo >= lineStatus.fieldBreaks.field2Start) {
         this.buffer[lineDataStart + 2] = this.buffer[lineDataStart + 2] | 0x80;
       }
@@ -103,7 +103,7 @@ RFC4175Packet.prototype.setLineDataHeaders = function (lineStatus, remaining) {
       this.buffer.writeUInt16BE(space - space % lineStatus.stride, lineDataStart);
       this.buffer.writeUInt16BE(lineStatus.lineNo & 0x7fff, lineDataStart + 2);
       this.buffer.writeUInt16BE((lineStatus.linePos / lineStatus.byteFactor) & 0x7fff,
-          lineDataStart + 4);
+        lineDataStart + 4);
       if (lineStatus.fieldBreaks.field2Start &&
           lineStatus.lineNo > lineStatus.fieldBreaks.field2Start) {
         this.buffer[lineDataStart + 2] = this.buffer[lineDataStart + 2] | 0x80;
@@ -115,7 +115,7 @@ RFC4175Packet.prototype.setLineDataHeaders = function (lineStatus, remaining) {
     this.lineCount++;
   }
   return lineStatus;
-}
+};
 
 RFC4175Packet.prototype.setPayload = function (b) {
   if (!b || !Buffer.isBuffer(b))
@@ -126,7 +126,7 @@ RFC4175Packet.prototype.setPayload = function (b) {
     this.buffer = this.buffer.slice(0, start + copied);
   }
   return copied;
-}
+};
 
 RFC4175Packet.prototype.toJSON = function () {
   var j = RTPPacket.prototype.toJSON.call(this);
@@ -138,6 +138,6 @@ RFC4175Packet.prototype.toJSON = function () {
       data : this.shrinkPayload(l.data) };
   });
   return j;
-}
+};
 
 module.exports = RFC4175Packet;

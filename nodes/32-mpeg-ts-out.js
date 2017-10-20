@@ -23,5 +23,5 @@ module.exports = function (RED) {
     // Go figure!
   }
   util.inherits(MPEGTSOut, redioactive.Spout);
-  RED.nodes.registerType("mpeg-ts-out", MPEGTSOut);
-}
+  RED.nodes.registerType('mpeg-ts-out', MPEGTSOut);
+};

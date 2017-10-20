@@ -17,18 +17,18 @@ module.exports = {
   shrinkPayload : function (b) {
     function byteToHex (x) {
       var s = x.toString(16); return (s.length == 1) ? '0' + s : s; }
-    var shrunk = "<Buffer ";
+    var shrunk = '<Buffer ';
     var firstTen = b.slice(0, 10);
-    for ( var x = 0 ; x < firstTen.length ; x++ )
+    for ( let x = 0 ; x < firstTen.length ; x++ )
       shrunk += byteToHex(firstTen[x]) + ' ';
-    shrunk += "... " + b.length + " bytes";
+    shrunk += '... ' + b.length + ' bytes';
     if (b.length > 10) {
-      shrunk += " ...";
+      shrunk += ' ...';
       var lastTen = b.slice((b.length < 15) ? 5 - b.length : -5);
-      for ( var x = 0 ; x < lastTen.length ; x++ )
+      for ( let x = 0 ; x < lastTen.length ; x++ )
         shrunk += ' ' + byteToHex(lastTen[x]);
     }
     shrunk += '>';
     return shrunk;
   }
-}
+};
