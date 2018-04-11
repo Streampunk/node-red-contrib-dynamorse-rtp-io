@@ -13,7 +13,7 @@
   limitations under the License.
 */
 
-var TestUtil = require('dynamorse-test').TestUtil;
+var TestUtil = require('dynamorse-test');
 
 var pcapTestNode = JSON.stringify({
   'type': 'pcap-reader',
