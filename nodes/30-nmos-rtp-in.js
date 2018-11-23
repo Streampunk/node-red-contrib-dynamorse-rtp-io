@@ -15,7 +15,6 @@
 
 var redioactive = require('node-red-contrib-dynamorse-core').Redioactive;
 var util = require('util');
-require('util.promisify').shim(); // TODO Remove when on Node 8+
 var SDPProcessing = require('node-red-contrib-dynamorse-core').SDPProcessing;
 var dgram = require('netadon');
 var udpInlet = require('../util/udpInlet.js');
@@ -147,7 +146,6 @@ module.exports = function (RED) {
         node.log(`Unable to start NMOS RTP in: ${err}`);
       });
     this.on('close', () => {
-      this.close();
       if (browser) browser.stop();
     }); // Delete flows when we're done?
   }

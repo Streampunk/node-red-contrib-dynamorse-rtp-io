@@ -75,7 +75,7 @@ module.exports = function (RED) {
           .pipe(grainConcater(this, this.tags))
       );
     });
-    this.on('close', this.close); // Delete flows when we're done?
+    this.on('close', () => {}); // Delete flows when we're done?
   }
   util.inherits(PCAPReader, redioactive.Funnel);
   RED.nodes.registerType('pcap-reader', PCAPReader);
